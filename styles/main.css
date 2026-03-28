@@ -1,0 +1,6 @@
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;background:#fff;color:#111}
+.nav{background:#fafafa;border-bottom:1px solid #eee}
+.nav ul{display:flex;gap:12px;padding:12px}
+.nav li{cursor:pointer;padding:6px 10px}
+.page{padding:24px}
+.hidden{display:none}
