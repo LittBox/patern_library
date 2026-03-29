@@ -1,4 +1,7 @@
 const STORAGE_KEY = 'pattern-library-state-v2'
+const DEFAULT_CREATOR_NAME = '林知夏'
+const DEFAULT_CREATOR_AVATAR = '/img/avatar/example.png'
+const DEFAULT_CREATOR_BIO = '专注非遗剪纸纹样与文创设计，持续把传统图样转化为更适合当代传播与商品展示的视觉作品。'
 
 export const state = {
   patterns: [],
@@ -18,9 +21,9 @@ function randomId(prefix) {
 export function createCreator() {
   return {
     id: 'creator_001',
-    name: '默认创作者',
-    avatar: '',
-    bio: '专注非遗剪纸纹样与文创设计，将传统图样转译为更适合数字传播与商品化的视觉作品。',
+    name: DEFAULT_CREATOR_NAME,
+    avatar: DEFAULT_CREATOR_AVATAR,
+    bio: DEFAULT_CREATOR_BIO,
     joinedAt: '2026-03-28T12:00:00.000Z'
   }
 }
@@ -51,6 +54,7 @@ export function createProductFromPattern(pattern, price) {
     id: randomId('prod'),
     patternId: pattern.id,
     title: pattern.title,
+    description: pattern.description || '',
     price,
     imageUrl: pattern.imageUrl,
     status: 'on_shelf',
@@ -112,6 +116,7 @@ export function loadAppState() {
     state.products = Array.isArray(parsed.products) ? parsed.products : []
     state.creator = parsed.creator || createCreator()
     state.aiDraft = parsed.aiDraft || null
+    migrateLegacyState()
   } catch (error) {
     console.warn('读取本地状态失败，使用默认状态。', error)
   }
@@ -128,6 +133,33 @@ export function saveAppState() {
       aiDraft: state.aiDraft
     })
   )
+}
+
+function migrateLegacyState() {
+  if (!state.creator) {
+    state.creator = createCreator()
+  }
+
+  if (!state.creator.name || state.creator.name === '默认创作者') {
+    state.creator.name = DEFAULT_CREATOR_NAME
+  }
+  if (!state.creator.avatar) {
+    state.creator.avatar = DEFAULT_CREATOR_AVATAR
+  }
+  if (!state.creator.bio || state.creator.bio === '专注非遗剪纸纹样与文创设计，将传统图样转译为更适合数字传播与商品化的视觉作品。') {
+    state.creator.bio = DEFAULT_CREATOR_BIO
+  }
+
+  state.products = state.products.map((product) => {
+    if (typeof product.description === 'string' && product.description.trim()) {
+      return product
+    }
+    const linkedPattern = state.patterns.find((pattern) => pattern.id === product.patternId)
+    return {
+      ...product,
+      description: linkedPattern?.description || ''
+    }
+  })
 }
 
 export function filterPatterns(patterns, { searchTerm = '', sourceType = '' } = {}) {

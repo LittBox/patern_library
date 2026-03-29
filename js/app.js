@@ -312,6 +312,12 @@ function ensureStateLoaded() {
   if (!loaded.creator) {
     loaded.creator = createCreator()
   }
+  if (!loaded.creator.avatar) {
+    loaded.creator.avatar = '/img/avatar/example.png'
+  }
+  if (!loaded.creator.name || loaded.creator.name === '默认创作者') {
+    loaded.creator.name = '林知夏'
+  }
   if (!Array.isArray(loaded.products)) {
     loaded.products = []
   }
@@ -367,6 +373,7 @@ async function bootstrapLocalAssets() {
       state.products = goodsData.map((item, index) => {
         const matchedPattern = state.patterns.find((pattern) => pattern.title === item.name)
         if (matchedPattern) {
+          matchedPattern.description = item.description || matchedPattern.description || ''
           matchedPattern.onShelf = true
           matchedPattern.price = item.price || 0
         }
@@ -375,6 +382,7 @@ async function bootstrapLocalAssets() {
           id: `prod_asset_${index + 1}`,
           patternId: matchedPattern?.id || `pt_asset_${index + 1}`,
           title: item.name || `商品 ${index + 1}`,
+          description: item.description || matchedPattern?.description || '',
           price: item.price || 0,
           imageUrl: normalizeAssetUrl(item.url) || matchedPattern?.imageUrl || PLACEHOLDER_SVG(720, 720, item.name || `商品 ${index + 1}`),
           status: 'on_shelf',
@@ -485,6 +493,7 @@ function renderProducts() {
       <img src="${product.imageUrl}" alt="${escapeHtml(product.title)}" class="product-card-image">
       <div class="product-card-content">
         <h3 class="product-card-name">${escapeHtml(product.title)}</h3>
+        <p class="product-card-desc">${escapeHtml(product.description || '待补充作品简介')}</p>
         <div class="product-card-meta">
           <span class="product-price">${formatCurrency(product.price)}</span>
           <span class="product-date">${formatDate(product.createdAt)}</span>
@@ -635,6 +644,7 @@ function upsertProduct(pattern, price) {
   if (existing) {
     existing.price = price
     existing.title = pattern.title
+    existing.description = pattern.description || ''
     existing.imageUrl = pattern.imageUrl
     existing.updatedAt = new Date().toISOString()
     return existing

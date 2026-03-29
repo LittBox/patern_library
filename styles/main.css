@@ -749,6 +749,13 @@ header {
   margin: 0 0 8px 0;
 }
 
+.product-card-desc {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #666;
+  margin: 0 0 12px 0;
+}
+
 .product-card-meta {
   display: flex;
   justify-content: space-between;
