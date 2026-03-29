@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>民族纹案库</title>
+  <link rel="preload" as="image" href="https://images.unsplash.com/photo-1578500494198-246f612d03b3?w=600&h=800&fit=crop" />
+  <link rel="preload" as="image" href="https://images.unsplash.com/photo-1577720643272-265f434884f0?w=600&h=800&fit=crop" />
   <link rel="stylesheet" href="styles/reset.css">
   <link rel="stylesheet" href="styles/main.css">
 </head>
@@ -21,11 +23,239 @@
   </header>
 
   <main>
-    <section id="home" class="page"> <h1>首页</h1> </section>
-    <section id="gallery" class="page hidden"> <h1>纹案库</h1> </section>
-    <section id="market" class="page hidden"> <h1>商品展览</h1> </section>
-    <section id="creator" class="page hidden"> <h1>创作者中心</h1> </section>
-    <section id="ai" class="page hidden"> <h1>AI 纹案生成</h1> </section>
+    <section id="home" class="page home-page">
+      <div class="home-hero">
+        <!-- 左侧：轮播图区域 -->
+        <div class="hero-carousel-section">
+          <div class="carousel-container">
+            <img id="carouselImage" class="carousel-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="纹案轮播" loading="lazy" decoding="async" />
+            <div class="carousel-controls">
+              <button class="carousel-prev">‹</button>
+              <button class="carousel-next">›</button>
+            </div>
+            <div class="carousel-dots">
+              <span class="dot active"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧：项目介绍卡片 -->
+        <div class="hero-info-section">
+          <div class="info-card">
+            <div class="info-header">
+              <span class="info-date">2026 年 3 月</span>
+            </div>
+            <div class="info-title">
+              <h1>民族纹案库</h1>
+              <h2>传承与创新的碰撞</h2>
+            </div>
+            <div class="info-description">
+              <p>欢迎来到民族纹案展示平台。我们致力于收集、展示和推广世界各地的民族纹案设计，为创作者和商家提供一个共享、交流和销售的空间。</p>
+              <p>通过 AI 技术和设计师之手，让传统民族纹样焕发新生。</p>
+            </div>
+            <div class="info-tags">
+              <span class="tag">民族文化</span>
+              <span class="tag">纹案设计</span>
+              <span class="tag">AI 创作</span>
+              <span class="tag">创意商品</span>
+            </div>
+            <div class="info-status">
+              <p><em>持续更新中</em></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 下方：热门推荐区 -->
+      <div class="home-featured">
+        <div class="featured-header">
+          <h3>热门纹案推荐</h3>
+          <a href="#" class="featured-more">查看全部 →</a>
+        </div>
+        <div class="featured-grid" id="featuredPatterns">
+          <!-- 动态加载热门纹案 -->
+        </div>
+      </div>
+    </section>
+    <section id="gallery" class="page gallery-page hidden">
+      <div class="page-container">
+        <div class="page-header">
+          <h1>纹案库</h1>
+          <div class="toolbar">
+            <button class="btn-primary" id="importBtn">导入图片</button>
+            <input type="file" id="fileInput" accept="image/*" style="display:none;">
+            <input type="text" class="search-box" id="searchInput" placeholder="搜索作品名称或描述...">
+            <select class="filter-select" id="filterSelect">
+              <option value="">全部</option>
+              <option value="ai">AI生成</option>
+              <option value="upload">自主上传</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- AI 生成区 -->
+        <div class="patterns-section">
+          <h3 class="section-title">AI 生成作品</h3>
+          <div class="patterns-grid" id="aiPatterns">
+            <!-- 动态加载 -->
+          </div>
+        </div>
+
+        <!-- 自主上传区 -->
+        <div class="patterns-section">
+          <h3 class="section-title">自主上传作品</h3>
+          <div class="patterns-grid" id="uploadPatterns">
+            <!-- 动态加载 -->
+          </div>
+        </div>
+
+        <div id="uploadResult"></div>
+      </div>
+    </section>
+    <section id="market" class="page market-page hidden">
+      <div class="page-container">
+        <div class="page-header">
+          <h1>商品展览</h1>
+          <div class="market-controls">
+            <select class="filter-select" id="sortSelect">
+              <option value="">按时间排序</option>
+              <option value="price">按价格排序</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="products-grid" id="productsGrid">
+          <!-- 动态加载商品卡片 -->
+        </div>
+      </div>
+    </section>
+    <section id="creator" class="page creator-page hidden">
+      <div class="page-container">
+        <div class="page-header">
+          <h1>创作者中心</h1>
+        </div>
+        
+        <div class="creators-grid" id="creatorsGrid">
+          <!-- 动态加载创作者卡片 -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 创作者详情页 -->
+    <section id="creator-detail" class="page creator-detail-page hidden">
+      <div class="page-container">
+        <!-- 返回按钮 -->
+        <div class="detail-header">
+          <button class="btn-back" id="backToCreator">← 返回</button>
+          <h1>创作者详情</h1>
+        </div>
+
+        <!-- 创作者信息卡 -->
+        <div class="creator-info-card creator-detail-card">
+          <div class="creator-avatar">
+            <img id="detailCreatorAvatar" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="创作者头像" loading="lazy" decoding="async" />
+          </div>
+          <div class="creator-details">
+            <h2 id="detailCreatorName">民族纹案设计师</h2>
+            <p id="detailCreatorBio">热爱传承与创新，专注民族纹案与文创设计</p>
+            <span class="creator-joindate">入驻时间：2026年3月28日</span>
+          </div>
+        </div>
+
+        <!-- 统计面板 -->
+        <div class="stats-panel">
+          <div class="stat-item">
+            <span class="stat-label">总作品数</span>
+            <span class="stat-value" id="totalPatterns">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">AI 生成</span>
+            <span class="stat-value" id="aiPatternCount">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">自主上传</span>
+            <span class="stat-value" id="uploadPatternCount">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">已上架商品</span>
+            <span class="stat-value" id="publishedProducts">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">未上架作品</span>
+            <span class="stat-value" id="unpublishedPatterns">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">本月新增</span>
+            <span class="stat-value" id="monthlyNew">0</span>
+          </div>
+        </div>
+
+        <!-- 最近作品与运营建议 -->
+        <div class="creator-bottom">
+          <div class="recent-works">
+            <h3>最近作品</h3>
+            <div class="works-list" id="recentWorks">
+              <!-- 动态加载 -->
+            </div>
+          </div>
+
+          <div class="operation-tips">
+            <h3>运营建议</h3>
+            <ul id="operationTips">
+              <li>优化您的作品简介，可以增加搜索曝光</li>
+              <li>设置合理的价格，有利于转化</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="ai" class="page ai-page hidden">
+      <div class="page-container">
+        <div class="page-header">
+          <h1>AI 纹案生成</h1>
+          <p class="page-subtitle">按技术文档的两段式流程，先生成结构化文案，再调用 OpenAI 图片模型生成纹案图像。</p>
+        </div>
+        <div class="ai-layout">
+          <div class="ai-form-card">
+            <div class="ai-form-grid">
+              <label>
+                <span>主题</span>
+                <input id="themeInput" type="text" placeholder="例如：蝴蝶、回纹、山水吉纹">
+              </label>
+              <label>
+                <span>民族风格</span>
+                <input id="styleInput" type="text" placeholder="例如：苗族、侗族、藏族">
+              </label>
+              <label>
+                <span>色彩倾向</span>
+                <input id="paletteInput" type="text" placeholder="例如：蓝白、红金、靛青">
+              </label>
+              <label>
+                <span>构图风格</span>
+                <input id="compositionInput" type="text" placeholder="例如：对称、满版、边框式">
+              </label>
+              <label>
+                <span>应用场景</span>
+                <input id="usageInput" type="text" placeholder="例如：包装、海报、布料印花">
+              </label>
+            </div>
+            <label class="textarea-label">
+              <span>补充描述</span>
+              <textarea id="aiPrompt" rows="6" placeholder="补充你想要的图案氛围、细节元素、质感要求或禁忌项。"></textarea>
+            </label>
+            <button class="btn-primary" id="generateBtn">生成图片</button>
+          </div>
+          <div class="ai-result-panel" id="aiResult">
+            <div class="empty-state tall">
+              <p>填写左侧描述后，这里会展示作品名称、简介、讲解词和生成的纹案图片。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script type="module" src="js/app.js"></script>

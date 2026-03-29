@@ -1,0 +1,57 @@
+
+[
+    {
+        "id": 1,
+        "name": "苗族蝴蝶妈妈纹",
+        "type": "自主上传",
+        "ethnic": "苗族",
+        "description": "苗族蝴蝶妈妈纹源于古老的创世叙事，象征生命繁衍与族群延续。",
+        "url": "https://gips1.baidu.com/it/u=2541775528,1902289000&fm=3074&app=3074&f=JPEG",
+        "price": 99
+    },
+    {
+        "id":2,
+        "name": "蓝白几何回纹",
+        "type": "自主上传",
+        "ethnic": "苗族",
+        "description": "蓝白回纹以循环结构寓意守护、绵延与生活秩序的稳定。",
+        "url": "img/patterns/lanbai.jpg",
+        "price": 129
+    },
+    {
+        "id":3,
+        "name": "壮族龙凤纹锦",
+        "type": "自主上传",
+        "ethnic": "壮族",
+        "description": "壮族龙凤纹锦常象征吉庆和合，也体现礼仪与织锦审美传统。",
+        "url": "https://gips3.baidu.com/it/u=3548099264,916535633&fm=3074&app=3074&f=JPEG",
+        "price": 149
+    },
+    {
+        "id":4,
+        "name": "民族刺绣花纹",
+        "type": "自主上传",
+        "ethnic": "多民族",
+        "description": "花鸟草木题材的刺绣纹样多寓意丰收、幸福与祈福。",
+        "url": "https://img1.baidu.com/it/u=3589089892,3281392340&fm=253&app=138&f=JPEG?w=800&h=1200",
+        "price": 119
+    },
+    {
+        "id":5,
+        "name": "藏族吉祥纹",
+        "type": "自主上传",
+        "ethnic": "藏族",
+        "description": "藏族吉祥纹常寓意平安圆满、福运相续与精神守护。",
+        "url": "https://gips3.baidu.com/it/u=284021503,2613477465&fm=3074&app=3074&f=JPEG",
+        "price": 139
+    },
+    {
+        "id":6,
+        "name": "傣族孔雀纹样",
+        "type": "自主上传",
+        "ethnic": "傣族",
+        "description": "孔雀纹样象征美丽、吉祥与纯净，体现傣族审美的柔美气质。",
+        "url": "https://img0.baidu.com/it/u=768229301,1122692377&fm=253&app=138&f=JPEG?w=800&h=1200",
+        "price": 129
+    }
+]

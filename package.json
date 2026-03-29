@@ -1,0 +1,27 @@
+{
+  "name": "patern_library",
+  "version": "1.0.0",
+  "description": "简要说明与快速上手步骤。",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run test:ui && npm run test:products",
+    "test:ui": "node tests/run-ui-test.mjs",
+    "test:products": "node tests/run-ui-test-products.mjs",
+    "test:upload": "node scripts/test_pattern_upload.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LittBox/patern_library.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/LittBox/patern_library/issues"
+  },
+  "homepage": "https://github.com/LittBox/patern_library#readme",
+  "dependencies": {
+    "jsdom": "^21.1.2"
+  }
+}

@@ -1,65 +1,65 @@
-# 民族纹案库 (H5 单页) - 项目脚手架
+# 民族纹案库
 
-简要说明与快速上手步骤。
+基于 `HTML + CSS + JavaScript + Netlify Functions` 的单页 H5 展示站，按技术文档实现了以下核心模块：
 
-必要环境变量（在 Netlify 项目设置中配置）：
+- 首页轮播与项目介绍
+- 纹案库搜索、来源筛选、上传、详情、编辑、删除
+- 商品展览的上架、改价、撤回
+- 创作者中心统计、最近作品、运营建议
+- AI 两段式生成流程
+  先用 `ai-generate-meta` 生成标题、简介、讲解词、图片提示词，再用 `ai-generate-image` 生成纹案图片，最后保存到纹案库
 
-- `OPENAI_API_KEY` - 用于调用 OpenAI 图片接口（仅示例）。
-- `DEEPSEEK_API_KEY` - DeepSeek 文案生成（如使用）。
- - `NETLIFY_SITE_ID` - Netlify 站点 ID，用于 Blobs API 上传。
- - `NETLIFY_ACCESS_TOKEN` - 用于调用 Netlify API 的访问令牌（部署时在 Netlify 控制台设置，或使用 Personal Access Token）。
+## 本地运行
 
-本仓库包含：
-
-- [index.html](index.html) : 单页入口
-- [styles/main.css](styles/main.css) : 基础样式
-- [js/](js) : 前端脚手架
-- [netlify/functions](netlify/functions) : Functions 占位实现
-- [netlify.toml](netlify.toml) : Netlify 配置
-
-快速本地测试（可选，需安装 netlify-cli）：
+直接用静态服务或 `netlify dev` 即可：
 
 ```bash
-# 安装 netlify CLI
-npm install -g netlify-cli
-
-# 在项目目录运行本地 dev（Functions 本地模拟）
-netlify dev
+npm install
+npx netlify dev
 ```
 
-部署说明：将仓库推到 GitHub 并在 Netlify 中新建站点，链接该仓库。
+如果暂时没有配置 AI 或 Netlify 环境变量，项目会自动使用本地回退逻辑：
 
-后续工作（建议）：
-- 实现 `pattern-upload` 把图片写入 Netlify Blobs
-- 把 `ai-generate-image` 的 OpenAI 返回图片保存到 Blobs 并返回 imageUrl
-- 实现前端的各页面组件和管理交互
+- AI 文案使用规则化 fallback
+- AI 图片返回内置 SVG 占位纹案
+- 图片上传返回 `data:` URL
+- 纹案与商品列表持久化到浏览器 `localStorage`
 
-示例：前端将图片以 base64 发送给 `pattern-upload`：
+## 环境变量
 
-```js
-// 例：将 File 转为 base64 并上传
-const toBase64 = (file) => new Promise((res,rej)=>{
-	const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file)
-})
+在 Netlify 中建议配置：
 
-const b64 = await toBase64(file) // 不含 data: 前缀
-const resp = await fetch('/.netlify/functions/pattern-upload', {
-	method:'POST',
-	headers:{ 'Content-Type':'application/json' },
-	body: JSON.stringify({ fileName: file.name, contentType: file.type || 'image/png', base64: b64 })
-})
-const result = await resp.json()
-console.log(result)
+- `OPENAI_API_KEY`
+- `DEEPSEEK_API_KEY`
+- `NETLIFY_SITE_ID`
+- `NETLIFY_ACCESS_TOKEN`
+
+说明：
+
+- 配了 `OPENAI_API_KEY` 后，`/.netlify/functions/ai-generate-image` 会调用 OpenAI 图片接口
+- 配了 `DEEPSEEK_API_KEY` 后，`/.netlify/functions/ai-generate-meta` 会调用 DeepSeek 生成结构化文案
+- 同时配置 `NETLIFY_SITE_ID` 和 `NETLIFY_ACCESS_TOKEN` 后，上传与 AI 图片结果可进一步写入 Netlify Blobs
+
+## 测试
+
+```bash
+npm test
+npm run test:upload
 ```
 
-示例：调用 `ai-generate-image` 并让 Function 把 OpenAI 返回图片写入 Blobs：
+当前测试覆盖：
 
-```js
-const resp = await fetch('/.netlify/functions/ai-generate-image', {
-	method:'POST',
-	headers:{ 'Content-Type':'application/json' },
-	body: JSON.stringify({ prompt: '苗族风格，蓝白配色，对称构图' })
-})
-const body = await resp.json()
-console.log(body) // 若已配置 NETLIFY vars，会返回 blob 信息
-```
+- AI 生成结果渲染与保存到纹案库
+- 纹案详情弹层打开
+- 商品改价与撤回
+- 上传函数的 fallback 返回
+
+## 目录说明
+
+- [index.html](/Users/admin/Desktop/patern_library/index.html)
+- [js/app.js](/Users/admin/Desktop/patern_library/js/app.js)
+- [js/api.js](/Users/admin/Desktop/patern_library/js/api.js)
+- [js/state.js](/Users/admin/Desktop/patern_library/js/state.js)
+- [netlify/functions/ai-generate-meta.js](/Users/admin/Desktop/patern_library/netlify/functions/ai-generate-meta.js)
+- [netlify/functions/ai-generate-image.js](/Users/admin/Desktop/patern_library/netlify/functions/ai-generate-image.js)
+- [netlify/functions/pattern-upload.js](/Users/admin/Desktop/patern_library/netlify/functions/pattern-upload.js)
