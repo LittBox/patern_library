@@ -11,11 +11,13 @@
 
 ## 本地运行
 
-直接用静态服务或 `netlify dev` 即可：
+如果你只看静态页面，用任意静态服务即可。
+
+如果你要使用真正的上传、AI Function、Blob 持久化，请务必使用 `netlify dev`：
 
 ```bash
 npm install
-npx netlify dev
+npm run dev
 ```
 
 如果暂时没有配置 AI 或 Netlify 环境变量，项目会自动使用本地回退逻辑：
@@ -34,14 +36,45 @@ npx netlify dev
 - `NETLIFY_SITE_ID`
 - `NETLIFY_ACCESS_TOKEN`
 
+其中：
+
+- `NETLIFY_SITE_ID`：你的 Netlify 站点 ID
+- `NETLIFY_ACCESS_TOKEN`：你的 Netlify Personal Access Token
+
+本地开发时也可以把这些变量写进项目根目录 `.env`，Netlify CLI 会在 `netlify dev` 启动时读取。
+
+可以参考模板文件：
+
+```bash
+cp .env.example .env
+```
+
 说明：
 
 - 配了 `DASHSCOPE_API_KEY` 后，`/.netlify/functions/ai-generate-image` 会调用阿里云百炼 / DashScope 的 `qwen-image-2.0` 图片接口
 - 配了 `DEEPSEEK_API_KEY` 后，`/.netlify/functions/ai-generate-meta` 会调用 DeepSeek 生成结构化文案
-- 同时配置 `NETLIFY_SITE_ID` 和 `NETLIFY_ACCESS_TOKEN` 后，上传与 AI 图片结果可进一步写入 Netlify Blobs
+- 同时配置 `NETLIFY_SITE_ID` 和 `NETLIFY_ACCESS_TOKEN` 后，上传与 AI 图片结果会优先通过官方 `@netlify/blobs` SDK 写入 Netlify Blobs
 - 如需自定义百炼网关地址，可额外配置 `DASHSCOPE_BASE_URL`
 
 如果还没有 API Key，可以先去阿里云百炼控制台创建 `DASHSCOPE_API_KEY`，再回到 Netlify 项目里配置环境变量。未配置时，项目会继续返回本地 SVG fallback，方便先联调页面。
+
+## 真上传排查
+
+如果“导入图片”要真正写进 Netlify Blob，而不是只在浏览器里预览，需要同时满足下面几项：
+
+1. 使用 `npm run dev` 或 `npx netlify dev` 启动，而不是只开静态服务器。
+2. `.env` 中存在 `NETLIFY_SITE_ID` 和 `NETLIFY_ACCESS_TOKEN`。
+3. `NETLIFY_ACCESS_TOKEN` 对对应站点有写入权限。
+4. 浏览器访问的是 Netlify Dev 输出的地址，通常是 `http://localhost:8888`。
+
+如果缺少其中任意一项，`pattern-upload` 会自动回退到本地 `data:` URL 模式，不会真正写入 Blob。
+
+当前实现说明：
+
+- 上传入口：`/.netlify/functions/pattern-upload`
+- Blob 读图入口：`/.netlify/functions/blob-image?key=...`
+- Blob 删除入口：`/.netlify/functions/delete-blob`
+- 服务端使用官方 `@netlify/blobs` SDK 持久化图片内容和基础元数据
 
 ## AI 图片接口说明
 

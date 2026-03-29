@@ -48,9 +48,23 @@ function buildImageFallback(prompt = '非遗剪纸纹样', reason = '') {
     imageBase64: btoa(unescape(encodeURIComponent(svg))),
     mimeType: 'image/svg+xml',
     imageUrl: '',
+    imageBlobKey: '',
     model: 'fallback-svg',
     fallback: true,
     message: reason || '当前未连通本地函数服务，已返回本地占位图用于页面联调。'
+  }
+}
+
+function buildUploadFallback({ fileName, contentType, base64 }, reason = '') {
+  return {
+    success: true,
+    fallback: true,
+    fileName,
+    contentType,
+    base64,
+    imageBlobKey: '',
+    imageUrl: base64 ? `data:${contentType};base64,${base64}` : '',
+    message: reason || '当前未连通本地函数服务，已切换为浏览器内预览模式。'
   }
 }
 
@@ -92,10 +106,18 @@ const api = {
   },
 
   async uploadPatternImage({ fileName, contentType, base64 }) {
-    const payload = await request('pattern-upload', {
-      method: 'POST',
-      body: JSON.stringify({ fileName, contentType, base64 })
-    })
+    let payload
+    try {
+      payload = await request('pattern-upload', {
+        method: 'POST',
+        body: JSON.stringify({ fileName, contentType, base64 })
+      })
+    } catch (error) {
+      return buildUploadFallback(
+        { fileName, contentType, base64 },
+        `上传服务暂不可用，已切换为本地导入模式。原因：${error.message || '未知错误'}`
+      )
+    }
 
     if (payload.imageUrl) {
       return payload
@@ -146,6 +168,21 @@ const api = {
         success: true,
         pattern: createPatternRecord(pattern)
       }
+    }
+  },
+
+  async deletePatternBlob(key) {
+    if (!key) {
+      return { success: true, deleted: false }
+    }
+
+    try {
+      return await request('delete-blob', {
+        method: 'POST',
+        body: JSON.stringify({ key })
+      })
+    } catch (error) {
+      throw new Error(error.message || '删除云端图片失败')
     }
   }
 }

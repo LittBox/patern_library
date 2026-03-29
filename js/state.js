@@ -10,6 +10,8 @@ export const state = {
   aiDraft: null
 }
 
+const DATA_URL_STORAGE_LIMIT = 10_000
+
 function now() {
   return new Date().toISOString()
 }
@@ -36,6 +38,8 @@ export function createPatternRecord(input) {
     description: input.description || '',
     explanation: input.explanation || '',
     imageUrl: input.imageUrl || '',
+    imageBlobKey: input.imageBlobKey || '',
+    imageStorageKey: input.imageStorageKey || '',
     sourceType: input.sourceType || 'upload',
     prompt: input.prompt || '',
     tags: Array.isArray(input.tags) ? input.tags : [],
@@ -123,22 +127,79 @@ export function loadAppState() {
   return state
 }
 
+function isOversizedDataUrl(value) {
+  return typeof value === 'string' && value.startsWith('data:') && value.length > DATA_URL_STORAGE_LIMIT
+}
+
+function compactImageUrl(imageUrl, imageBlobKey = '') {
+  if (!imageBlobKey && imageUrl && imageUrl.startsWith('data:')) {
+    return ''
+  }
+
+  if (!imageBlobKey && isOversizedDataUrl(imageUrl)) {
+    return ''
+  }
+
+  return imageUrl || ''
+}
+
+function createStoragePayload({ compact = false, dropDraft = false } = {}) {
+  const patterns = state.patterns.map((pattern) => ({
+    ...pattern,
+    imageUrl: compact ? compactImageUrl(pattern.imageUrl, pattern.imageBlobKey) : pattern.imageUrl
+  }))
+
+  const products = state.products.map((product) => {
+    const linkedPattern = patterns.find((pattern) => pattern.id === product.patternId)
+    return {
+      ...product,
+      imageUrl: compact ? compactImageUrl(product.imageUrl, linkedPattern?.imageBlobKey || '') : product.imageUrl
+    }
+  })
+
+  const aiDraft = dropDraft || !state.aiDraft
+    ? null
+    : {
+        ...state.aiDraft,
+        imageUrl: compact ? compactImageUrl(state.aiDraft.imageUrl, state.aiDraft.imageBlobKey || '') : state.aiDraft.imageUrl
+      }
+
+  return {
+    patterns,
+    products,
+    creator: state.creator,
+    aiDraft
+  }
+}
+
 export function saveAppState() {
-  window.localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify({
-      patterns: state.patterns,
-      products: state.products,
-      creator: state.creator,
-      aiDraft: state.aiDraft
-    })
-  )
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(createStoragePayload()))
+  } catch (error) {
+    if (error?.name !== 'QuotaExceededError') {
+      throw error
+    }
+
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(createStoragePayload({ compact: true })))
+      console.warn('本地存储空间不足，已自动裁剪过大的图片缓存。')
+    } catch (compactError) {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(createStoragePayload({ compact: true, dropDraft: true })))
+      console.warn('本地存储空间不足，已裁剪图片缓存并清除当前 AI 草稿。', compactError)
+    }
+  }
 }
 
 function migrateLegacyState() {
   if (!state.creator) {
     state.creator = createCreator()
   }
+
+  state.patterns = state.patterns.map((pattern) => ({
+    ...pattern,
+    imageBlobKey: pattern.imageBlobKey || '',
+    imageStorageKey: pattern.imageStorageKey || ''
+  }))
 
   if (!state.creator.name || state.creator.name === '默认创作者') {
     state.creator.name = DEFAULT_CREATOR_NAME

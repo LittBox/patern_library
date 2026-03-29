@@ -4,6 +4,7 @@
   "description": "简要说明与快速上手步骤。",
   "main": "index.js",
   "scripts": {
+    "dev": "npx netlify dev",
     "test": "npm run test:ui && npm run test:products",
     "test:ui": "node tests/run-ui-test.mjs",
     "test:products": "node tests/run-ui-test-products.mjs",
@@ -22,6 +23,7 @@
   },
   "homepage": "https://github.com/LittBox/patern_library#readme",
   "dependencies": {
+    "@netlify/blobs": "^10.7.4",
     "jsdom": "^21.1.2"
   }
 }

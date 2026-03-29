@@ -1,5 +1,10 @@
 import api from './api.js'
 import {
+  deleteLocalImage,
+  readLocalImage,
+  saveLocalImage
+} from './local-images.js'
+import {
   createCreator,
   createPatternRecord,
   createProductFromPattern,
@@ -21,10 +26,15 @@ import {
 
 const pages = [...document.querySelectorAll('.page')]
 const navItems = [...document.querySelectorAll('.nav li')]
+const mobileNavItems = [...document.querySelectorAll('.nav-drawer-nav [data-target]')]
 const creatorSection = document.getElementById('creator')
 const creatorDetailSection = document.getElementById('creator-detail')
 const aiResult = document.getElementById('aiResult')
 const uploadResult = document.getElementById('uploadResult')
+const navToggle = document.getElementById('navToggle')
+const navDrawer = document.getElementById('mobileNavDrawer')
+const navDrawerBackdrop = document.getElementById('navDrawerBackdrop')
+const navDrawerClose = document.getElementById('navDrawerClose')
 
 const PLACEHOLDER_SVG = (width = 640, height = 640, text = '非遗剪纸纹样') => {
   const safeText = escapeHtml(text)
@@ -357,6 +367,36 @@ function ensureStateLoaded() {
   saveAppState()
 }
 
+async function hydrateLocalPatternImages() {
+  const patternsWithLocalImages = state.patterns.filter((pattern) => pattern.imageStorageKey)
+
+  await Promise.all(patternsWithLocalImages.map(async (pattern) => {
+    const localImageUrl = await readLocalImage(pattern.imageStorageKey).catch(() => '')
+    if (localImageUrl) {
+      pattern.imageUrl = localImageUrl
+    }
+  }))
+
+  state.products = state.products.map((product) => {
+    const linkedPattern = state.patterns.find((pattern) => pattern.id === product.patternId)
+    if (linkedPattern?.imageUrl) {
+      return {
+        ...product,
+        imageUrl: linkedPattern.imageUrl
+      }
+    }
+
+    return product
+  })
+
+  if (state.aiDraft?.imageStorageKey) {
+    const localDraftImage = await readLocalImage(state.aiDraft.imageStorageKey).catch(() => '')
+    if (localDraftImage) {
+      state.aiDraft.imageUrl = localDraftImage
+    }
+  }
+}
+
 async function fetchLocalJson(path) {
   const response = await fetch(path)
   if (!response.ok) {
@@ -661,10 +701,26 @@ function bindCarousel() {
 function showPage(pageId) {
   pages.forEach((page) => page.classList.toggle('hidden', page.id !== pageId))
   navItems.forEach((item) => item.classList.toggle('active', item.dataset.target === pageId))
+  mobileNavItems.forEach((item) => item.classList.toggle('is-active', item.dataset.target === pageId))
 
   if (pageId === 'creator-detail') {
     navItems.forEach((item) => item.classList.toggle('active', item.dataset.target === 'creator'))
+    mobileNavItems.forEach((item) => item.classList.toggle('is-active', item.dataset.target === 'creator'))
   }
+}
+
+function openMobileNav() {
+  navDrawer?.classList.remove('hidden')
+  navDrawerBackdrop?.classList.remove('hidden')
+  navDrawer?.setAttribute('aria-hidden', 'false')
+  navToggle?.setAttribute('aria-expanded', 'true')
+}
+
+function closeMobileNav() {
+  navDrawer?.classList.add('hidden')
+  navDrawerBackdrop?.classList.add('hidden')
+  navDrawer?.setAttribute('aria-hidden', 'true')
+  navToggle?.setAttribute('aria-expanded', 'false')
 }
 
 function upsertProduct(pattern, price) {
@@ -696,11 +752,27 @@ function updatePattern(patternId, updates) {
   return pattern
 }
 
-function removePattern(patternId) {
-  state.patterns = state.patterns.filter((pattern) => pattern.id !== patternId)
+async function removePattern(patternId) {
+  const pattern = getPatternById(patternId)
+  if (!pattern) return false
+
+  if (pattern.imageBlobKey) {
+    await api.deletePatternBlob(pattern.imageBlobKey)
+  }
+  if (pattern.imageStorageKey) {
+    await deleteLocalImage(pattern.imageStorageKey).catch(() => {})
+  }
+
+  state.patterns = state.patterns.filter((item) => item.id !== patternId)
   state.products = state.products.filter((product) => product.patternId !== patternId)
+  if (activePatternId === patternId) {
+    activePatternId = null
+  }
+  document.getElementById('patternModalOverlay')?.remove()
   saveAppState()
   rerender()
+  showToast(`《${pattern.title}》已删除。`)
+  return true
 }
 
 function rerender() {
@@ -787,7 +859,9 @@ function createPatternDetailModal(pattern) {
         confirmText: '确认删除',
         danger: true,
         onConfirm: () => {
-          removePattern(pattern.id)
+          removePattern(pattern.id).catch((error) => {
+            showToast(error.message || '删除作品失败，请稍后重试。', { type: 'error', duration: 2800 })
+          })
           overlay.remove()
         }
       })
@@ -804,11 +878,17 @@ async function handleUpload(file) {
     base64: payload.base64
   })
 
+  const imageStorageKey = uploaded.fallback
+    ? await saveLocalImage(uploaded.imageUrl || base64).catch(() => '')
+    : ''
+
   const newPattern = createPatternRecord({
     title: file.name.replace(/\.[^.]+$/, ''),
     description: '自主上传的非遗剪纸纹样作品，等待补充更多讲解信息。',
     explanation: '上传作品已进入剪纸纹样库，可继续完善名称、简介和货架价格。',
     imageUrl: uploaded.imageUrl || base64,
+    imageBlobKey: uploaded.imageBlobKey || '',
+    imageStorageKey,
     sourceType: 'upload',
     prompt: '',
     tags: ['自主上传', '本地素材'],
@@ -820,7 +900,10 @@ async function handleUpload(file) {
   state.patterns.unshift(newPattern)
   saveAppState()
   rerender()
-  uploadResult.innerHTML = `<p class="inline-feedback success">已导入作品《${escapeHtml(newPattern.title)}》，现在可以继续编辑或上架。</p>`
+  const uploadMessage = uploaded.fallback
+    ? `已导入作品《${escapeHtml(newPattern.title)}》，当前为本地导入模式，刷新页面前建议尽快完善或保存。`
+    : `已导入作品《${escapeHtml(newPattern.title)}》，现在可以继续编辑或上架。`
+  uploadResult.innerHTML = `<p class="inline-feedback success">${uploadMessage}</p>`
 }
 
 async function handleGenerate() {
@@ -856,6 +939,7 @@ async function handleGenerate() {
       explanation: meta.explanation,
       prompt: meta.image_prompt,
       imageUrl: previewUrl,
+      imageBlobKey: image.imageBlobKey || '',
       imageModel: image.model || 'qwen-image-2.0',
       textModel: meta.textModel || 'deepseek-chat',
       tags: meta.tags || [],
@@ -926,6 +1010,7 @@ async function handleGenerate() {
         description: state.aiDraft.description,
         explanation: state.aiDraft.explanation,
         imageUrl: state.aiDraft.imageUrl,
+        imageBlobKey: state.aiDraft.imageBlobKey,
         sourceType: 'ai',
         prompt: state.aiDraft.prompt,
         tags: state.aiDraft.tags,
@@ -947,6 +1032,7 @@ async function handleGenerate() {
               description: savedPattern.description,
               explanation: savedPattern.explanation,
               tags: savedPattern.tags,
+              imageBlobKey: savedPattern.imageBlobKey,
               imageModel: savedPattern.imageModel,
               textModel: savedPattern.textModel,
               price: savedPattern.price,
@@ -994,9 +1080,28 @@ function bindNavigation() {
     item.addEventListener('click', () => showPage(item.dataset.target))
   })
 
+  mobileNavItems.forEach((item) => {
+    item.addEventListener('click', () => {
+      showPage(item.dataset.target)
+      closeMobileNav()
+    })
+  })
+
+  navToggle?.addEventListener('click', () => {
+    if (navDrawer?.classList.contains('hidden')) {
+      openMobileNav()
+      return
+    }
+    closeMobileNav()
+  })
+
+  navDrawerClose?.addEventListener('click', closeMobileNav)
+  navDrawerBackdrop?.addEventListener('click', closeMobileNav)
+
   document.querySelector('.featured-more')?.addEventListener('click', (event) => {
     event.preventDefault()
     showPage('gallery')
+    closeMobileNav()
   })
 }
 
@@ -1052,7 +1157,11 @@ function bindGallery() {
         message: `确认删除《${pattern.title}》吗？删除后无法恢复。`,
         confirmText: '确认删除',
         danger: true,
-        onConfirm: () => removePattern(pattern.id)
+        onConfirm: () => {
+          removePattern(pattern.id).catch((error) => {
+            showToast(error.message || '删除作品失败，请稍后重试。', { type: 'error', duration: 2800 })
+          })
+        }
       })
     }
   })
@@ -1142,6 +1251,7 @@ async function bootstrapFromServer() {
 
 async function init() {
   ensureStateLoaded()
+  await hydrateLocalPatternImages()
   await bootstrapFromServer()
   await bootstrapLocalAssets()
 

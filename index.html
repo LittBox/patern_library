@@ -11,6 +11,11 @@
 </head>
 <body>
   <header>
+    <button class="nav-toggle" id="navToggle" type="button" aria-label="打开导航菜单" aria-expanded="false" aria-controls="mobileNavDrawer">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
     <nav class="nav">
       <ul>
         <li data-target="home">首页</li>
@@ -21,6 +26,23 @@
       </ul>
     </nav>
   </header>
+  <div class="nav-drawer-backdrop hidden" id="navDrawerBackdrop"></div>
+  <aside class="nav-drawer hidden" id="mobileNavDrawer" aria-hidden="true">
+    <div class="nav-drawer-header">
+      <div>
+        <p class="nav-drawer-kicker">导航</p>
+        <strong>非遗剪纸纹样库</strong>
+      </div>
+      <button class="nav-drawer-close" id="navDrawerClose" type="button" aria-label="关闭导航菜单">×</button>
+    </div>
+    <nav class="nav-drawer-nav" aria-label="移动端导航">
+      <button type="button" data-target="home">首页</button>
+      <button type="button" data-target="gallery">剪纸纹样库</button>
+      <button type="button" data-target="market">商品展览</button>
+      <button type="button" data-target="creator">创作者中心</button>
+      <button type="button" data-target="ai">AI 剪纸纹样生成</button>
+    </nav>
+  </aside>
 
   <main>
     <section id="home" class="page home-page">

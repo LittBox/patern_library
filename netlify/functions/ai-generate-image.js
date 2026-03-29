@@ -4,9 +4,8 @@ const DASHSCOPE_BASE_URL = (
   process.env.QWEN_BASE_URL ||
   'https://dashscope.aliyuncs.com'
 ).replace(/\/$/, '')
-const NETLIFY_TOKEN = process.env.NETLIFY_ACCESS_TOKEN
-const SITE_ID = process.env.NETLIFY_SITE_ID
 const QWEN_IMAGE_MODEL = 'qwen-image-2.0'
+import { canUseBlobStore, saveImageBlob } from './blob-store.js'
 const DEFAULT_NEGATIVE_PROMPT = [
   '低清晰度',
   '模糊',
@@ -46,27 +45,6 @@ function makeFallbackSvg(prompt = '民族纹案') {
     </svg>
   `
   return Buffer.from(svg).toString('base64')
-}
-
-async function uploadBlob(name, contentType, base64) {
-  if (!NETLIFY_TOKEN || !SITE_ID) return null
-  const url = `https://api.netlify.com/api/v1/sites/${SITE_ID}/blobs?name=${encodeURIComponent(name)}`
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${NETLIFY_TOKEN}`,
-      'Content-Type': contentType
-    },
-    body: Buffer.from(base64, 'base64')
-  })
-
-  if (!response.ok) {
-    const text = await response.text()
-    throw new Error(`Netlify Blob 上传失败: ${response.status} ${text}`)
-  }
-
-  const payload = await response.json().catch(() => ({}))
-  return payload
 }
 
 async function downloadImageAsBase64(url) {
@@ -140,21 +118,29 @@ export async function handler(event) {
     }
 
     const downloaded = await downloadImageAsBase64(imageUrl)
-    const imageBase64 = downloaded.base64
+    const rawImageBase64 = downloaded.base64
     const mimeType = downloaded.contentType || 'image/png'
     let persistedImageUrl = ''
-    if (NETLIFY_TOKEN && SITE_ID) {
+    let persistedImageBlobKey = ''
+    if (canUseBlobStore()) {
       const extension = mimeType.includes('jpeg') ? 'jpg' : 'png'
-      const fileName = `pattern-${Date.now()}.${extension}`
-      const blob = await uploadBlob(fileName, mimeType, imageBase64)
-      persistedImageUrl = blob?.url || blob?.public_url || ''
+      const fileName = `pattern.${extension}`
+      const blob = await saveImageBlob({
+        prefix: 'ai',
+        fileName,
+        contentType: mimeType,
+        base64: rawImageBase64
+      })
+      persistedImageUrl = blob?.url || ''
+      persistedImageBlobKey = blob?.key || ''
     }
 
     return json(200, {
       success: true,
-      imageBase64,
+      imageBase64: persistedImageUrl ? '' : rawImageBase64,
       mimeType,
       imageUrl: persistedImageUrl || imageUrl,
+      imageBlobKey: persistedImageBlobKey,
       sourceUrl: imageUrl,
       model: QWEN_IMAGE_MODEL,
       requestId: payload?.request_id || ''
