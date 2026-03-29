@@ -424,9 +424,9 @@ header {
 }
 
 .upload-icon-btn {
-  width: 52px;
-  height: 52px;
-  min-width: 52px;
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
   padding: 0;
   border-radius: 50%;
   display: inline-flex;
@@ -435,8 +435,8 @@ header {
 }
 
 .upload-icon-btn svg {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   display: block;
 }
 
@@ -1234,7 +1234,7 @@ header {
 
   .toolbar {
     display: grid;
-    grid-template-columns: 48px minmax(0, 1fr);
+    grid-template-columns: 46px minmax(0, 1fr);
     gap: 12px;
     align-items: center;
   }
@@ -1245,9 +1245,9 @@ header {
   }
 
   .upload-icon-btn {
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
   }
 
   .filter-select {
