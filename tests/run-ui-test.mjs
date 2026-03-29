@@ -57,7 +57,7 @@ global.fetch = async (url) => {
         success: true,
         imageBase64: 'PHN2Zy8+',
         mimeType: 'image/svg+xml',
-        model: 'fallback-svg'
+        model: 'qwen-image-2.0'
       })
     }
   }

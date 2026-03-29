@@ -1,5 +1,7 @@
 # 非遗剪纸纹样库 H5 展示网站技术实现文档（OpenAI 图片生成版）
 
+> 说明：这份文档对应旧版 OpenAI 图片生成实现，当前项目已切换到 Qwen Image 2.0。请优先参考 [tech_doc_qwen_image_generation.md](/Users/admin/Desktop/patern_library/tech_doc_qwen_image_generation.md)。
+
 ## 1. 项目概述
 
 本项目是一个**单页面 H5 非遗剪纸纹样库展示网站**，采用 **HTML + CSS + JavaScript** 开发，不使用前端框架，不做多页面路由跳转，所有内容在同一个页面中通过模块切换、弹窗和局部渲染完成。项目部署到 **GitHub + Netlify**，不需要自建云服务器。原始需求包括首页、纹案库、纹案详情、商品展览、AI 纹案生成等模块；本版本在此基础上新增 **创作者中心** 模块，并将其加入顶部导航。

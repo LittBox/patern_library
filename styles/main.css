@@ -1755,8 +1755,80 @@ header {
   line-height: 1.8;
 }
 
+.result-price-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.result-price-field span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.result-price-field input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.result-price-field input:focus {
+  outline: none;
+  border-color: rgba(143, 31, 36, 0.4);
+  box-shadow: 0 0 0 4px rgba(196, 71, 61, 0.12);
+}
+
 .result-actions {
   margin-top: 20px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.result-actions .btn-primary,
+.result-actions .btn-secondary {
+  min-width: 220px;
+}
+
+.result-actions .btn-primary.is-disabled,
+.result-actions .btn-primary:disabled {
+  opacity: 0.66;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.result-actions .btn-primary.is-saved {
+  opacity: 1;
+  background: linear-gradient(135deg, #6b9ad6, #8fb5e8);
+  box-shadow: 0 12px 22px rgba(74, 113, 176, 0.18);
+}
+
+.ai-discard-btn {
+  width: 52px;
+  height: 52px;
+  border: 1px solid rgba(143, 31, 36, 0.16);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 248, 246, 0.98), rgba(244, 223, 219, 0.9));
+  color: #9a2025;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 52px;
+  box-shadow: 0 10px 18px rgba(120, 22, 26, 0.08);
+}
+
+.ai-discard-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.ai-discard-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 22px rgba(120, 22, 26, 0.12);
 }
 
 .pattern-card,
@@ -2088,6 +2160,36 @@ header {
   margin: 10px 0 0;
   line-height: 1.8;
   color: var(--muted);
+}
+
+.app-toast {
+  position: fixed;
+  top: 28px;
+  right: 28px;
+  z-index: 1700;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: rgba(120, 22, 26, 0.94);
+  color: #fff8f4;
+  box-shadow: 0 18px 42px rgba(120, 22, 26, 0.22);
+  transform: translateY(-10px);
+  opacity: 0;
+  transition: transform 0.22s ease, opacity 0.22s ease;
+  line-height: 1.6;
+}
+
+.app-toast.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.app-toast.error {
+  background: rgba(166, 58, 44, 0.96);
+}
+
+.app-toast.info {
+  background: rgba(92, 108, 146, 0.94);
 }
 
 @media (max-width: 960px) {

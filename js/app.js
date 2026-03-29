@@ -73,6 +73,15 @@ let carouselTimer = null
 let activePatternId = null
 let activeCreatorId = null
 
+function resetAiResultPanel() {
+  if (!aiResult) return
+  aiResult.innerHTML = `
+    <div class="empty-state tall">
+      <p>填写左侧描述后，这里会展示作品名称、简介、讲解词和生成的纹案图片。</p>
+    </div>
+  `
+}
+
 function normalizeAssetUrl(url) {
   if (!url) return ''
   if (/^https?:\/\//.test(url) || url.startsWith('/')) return url
@@ -174,6 +183,25 @@ function showNotice(title, message) {
   })
 
   overlay.querySelector('[data-mini-action="ok"]')?.addEventListener('click', removeMiniModal)
+}
+
+function showToast(message, { type = 'success', duration = 2200 } = {}) {
+  const existing = document.getElementById('appToast')
+  existing?.remove()
+
+  const toast = document.createElement('div')
+  toast.id = 'appToast'
+  toast.className = `app-toast ${type}`
+  toast.textContent = message
+  document.body.appendChild(toast)
+
+  const scheduleFrame = window.requestAnimationFrame || ((callback) => window.setTimeout(callback, 16))
+  scheduleFrame(() => toast.classList.add('visible'))
+
+  window.setTimeout(() => {
+    toast.classList.remove('visible')
+    window.setTimeout(() => toast.remove(), 220)
+  }, duration)
 }
 
 function openConfirmDialog({ title, message, confirmText = '确认', danger = false, onConfirm }) {
@@ -819,16 +847,23 @@ async function handleGenerate() {
     const meta = await api.generatePatternMeta(fields)
     const image = await api.generatePatternImage(meta.image_prompt)
     const previewUrl = image.imageUrl || `data:${image.mimeType};base64,${image.imageBase64}`
+    const defaultAiPrice = 99
 
     state.aiDraft = {
+      id: `draft_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       title: meta.title,
       description: meta.description,
       explanation: meta.explanation,
       prompt: meta.image_prompt,
       imageUrl: previewUrl,
-      imageModel: image.model || 'gpt-image-1.5',
+      imageModel: image.model || 'qwen-image-2.0',
       textModel: meta.textModel || 'deepseek-chat',
-      tags: meta.tags || []
+      tags: meta.tags || [],
+      price: defaultAiPrice,
+      onShelf: true,
+      saving: false,
+      fallback: Boolean(image.fallback),
+      debugMessage: image.message || ''
     }
 
     aiResult.innerHTML = `
@@ -840,6 +875,7 @@ async function handleGenerate() {
           <p class="eyebrow">AI 生成结果</p>
           <h3>${escapeHtml(meta.title)}</h3>
           <p>${escapeHtml(meta.description)}</p>
+          ${state.aiDraft.fallback ? `<div class="inline-feedback">${escapeHtml(state.aiDraft.debugMessage || '当前展示的是本地占位图，请检查本地函数服务。')}</div>` : ''}
           <div class="result-block">
             <strong>纹案讲解词</strong>
             <p>${escapeHtml(meta.explanation)}</p>
@@ -848,14 +884,43 @@ async function handleGenerate() {
             <strong>图片提示词</strong>
             <p>${escapeHtml(meta.image_prompt)}</p>
           </div>
+          <div class="result-block">
+            <strong>上架价格</strong>
+            <label class="result-price-field">
+              <span>保存到商品展览时使用这个价格</span>
+              <input id="aiPatternPrice" type="number" min="0" step="0.01" value="${defaultAiPrice}">
+            </label>
+          </div>
           <div class="result-actions">
-            <button class="btn-primary" id="saveAiPatternBtn">保存到剪纸纹样库</button>
+            <button class="btn-primary" id="saveAiPatternBtn">保存并加入商品展览</button>
+            <button class="ai-discard-btn" id="discardAiPatternBtn" aria-label="丢弃本次结果" title="丢弃本次结果">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 7h14M9 7V5h6v2M8 7v12m8-12v12M6 7l1 13h10l1-13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+            </button>
           </div>
         </div>
       </article>
     `
 
     document.getElementById('saveAiPatternBtn')?.addEventListener('click', async () => {
+      if (!state.aiDraft || state.aiDraft.saved || state.aiDraft.saving) {
+        showToast('这次结果已经加入商品展览，请重新生成新的作品。', { type: 'info' })
+        return
+      }
+
+      const price = Number(document.getElementById('aiPatternPrice')?.value)
+      if (!Number.isFinite(price) || price < 0) {
+        showToast('请输入大于或等于 0 的有效价格。', { type: 'error', duration: 2600 })
+        return
+      }
+
+      const saveBtn = document.getElementById('saveAiPatternBtn')
+      state.aiDraft = { ...state.aiDraft, saving: true }
+      saveBtn?.setAttribute('disabled', 'true')
+      saveBtn?.classList.add('is-disabled')
+      if (saveBtn) saveBtn.textContent = '保存中...'
+
       const savedPattern = createPatternRecord({
         title: state.aiDraft.title,
         description: state.aiDraft.description,
@@ -865,14 +930,56 @@ async function handleGenerate() {
         prompt: state.aiDraft.prompt,
         tags: state.aiDraft.tags,
         imageModel: state.aiDraft.imageModel,
-        textModel: state.aiDraft.textModel
+        textModel: state.aiDraft.textModel,
+        price,
+        onShelf: state.aiDraft.onShelf
       })
 
-      const serverSaved = await api.savePattern(savedPattern)
-      state.patterns.unshift(serverSaved.pattern || savedPattern)
+      try {
+        const existingPattern = state.patterns.find((pattern) =>
+          pattern.title === savedPattern.title &&
+          pattern.imageUrl === savedPattern.imageUrl &&
+          pattern.prompt === savedPattern.prompt
+        )
+
+        const finalPattern = existingPattern
+          ? updatePattern(existingPattern.id, {
+              description: savedPattern.description,
+              explanation: savedPattern.explanation,
+              tags: savedPattern.tags,
+              imageModel: savedPattern.imageModel,
+              textModel: savedPattern.textModel,
+              price: savedPattern.price,
+              onShelf: savedPattern.onShelf
+            })
+          : createPatternRecord((await api.savePattern(savedPattern)).pattern || savedPattern)
+
+        if (!existingPattern) {
+          state.patterns.unshift(finalPattern)
+        }
+        if (finalPattern?.onShelf && typeof finalPattern.price === 'number') {
+          upsertProduct(finalPattern, finalPattern.price)
+        }
+
+        state.aiDraft = { ...state.aiDraft, saved: true, saving: false }
+        if (saveBtn) saveBtn.textContent = '已加入商品展览'
+        saveBtn?.classList.add('is-saved')
+        saveAppState()
+        rerender()
+        showToast(`《${finalPattern.title}》已按 ${formatCurrency(finalPattern.price || 0)} 加入商品展览。`)
+      } catch (error) {
+        state.aiDraft = { ...state.aiDraft, saving: false }
+        saveBtn?.removeAttribute('disabled')
+        saveBtn?.classList.remove('is-disabled')
+        if (saveBtn) saveBtn.textContent = '保存并加入商品展览'
+        showToast(error.message || '加入商品展览失败，请重试。', { type: 'error', duration: 2600 })
+      }
+    })
+
+    document.getElementById('discardAiPatternBtn')?.addEventListener('click', () => {
+      state.aiDraft = null
       saveAppState()
-      rerender()
-      showPage('gallery')
+      resetAiResultPanel()
     })
   } catch (error) {
     aiResult.innerHTML = `<div class="inline-feedback error">${escapeHtml(error.message || '生成失败，请稍后重试。')}</div>`
@@ -1048,6 +1155,7 @@ async function init() {
   renderCarousel()
   startCarousel()
   rerender()
+  resetAiResultPanel()
   showPage('home')
 }
 

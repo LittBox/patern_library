@@ -11,11 +11,47 @@ async function request(path, options = {}) {
     ...options
   })
 
-  const payload = await response.json().catch(() => ({}))
+  const rawText = await response.text()
+  let payload = {}
+  try {
+    payload = rawText ? JSON.parse(rawText) : {}
+  } catch {
+    payload = rawText ? { message: rawText } : {}
+  }
   if (!response.ok || payload.success === false) {
     throw new Error(payload.message || `${path} 请求失败`)
   }
   return payload
+}
+
+function buildImageFallback(prompt = '非遗剪纸纹样', reason = '') {
+  const safeText = String(prompt || '非遗剪纸纹样').slice(0, 24)
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+      <defs>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#f7efe1" />
+          <stop offset="100%" stop-color="#d6b17f" />
+        </linearGradient>
+      </defs>
+      <rect width="1024" height="1024" rx="56" fill="url(#bg)" />
+      <circle cx="512" cy="512" r="256" fill="none" stroke="#6d4424" stroke-width="24" stroke-dasharray="28 18" />
+      <circle cx="512" cy="512" r="168" fill="none" stroke="#9d6b3a" stroke-width="18" />
+      <path d="M220 620 Q512 260 804 620" fill="none" stroke="#b56d3d" stroke-width="22" stroke-linecap="round"/>
+      <path d="M220 404 Q512 764 804 404" fill="none" stroke="#8f5730" stroke-width="18" stroke-linecap="round"/>
+      <text x="50%" y="860" text-anchor="middle" fill="#4f2f18" font-size="42" font-family="sans-serif">${safeText}</text>
+    </svg>
+  `
+
+  return {
+    success: true,
+    imageBase64: btoa(unescape(encodeURIComponent(svg))),
+    mimeType: 'image/svg+xml',
+    imageUrl: '',
+    model: 'fallback-svg',
+    fallback: true,
+    message: reason || '当前未连通本地函数服务，已返回本地占位图用于页面联调。'
+  }
 }
 
 function buildMetaFallback(fields) {
@@ -84,10 +120,15 @@ const api = {
   },
 
   async generatePatternImage(prompt) {
-    const payload = await request('ai-generate-image', {
-      method: 'POST',
-      body: JSON.stringify({ prompt })
-    })
+    let payload
+    try {
+      payload = await request('ai-generate-image', {
+        method: 'POST',
+        body: JSON.stringify({ prompt })
+      })
+    } catch (error) {
+      return buildImageFallback(prompt, `图片服务暂不可用，已切换为占位图。原因：${error.message || '未知错误'}`)
+    }
 
     if (payload.imageUrl || payload.imageBase64) return payload
 

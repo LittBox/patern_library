@@ -76,7 +76,7 @@ export function createSeedPatterns(placeholder) {
       tags: ['回纹', '红金', '对称'],
       onShelf: true,
       price: 129,
-      imageModel: 'gpt-image-1.5',
+      imageModel: 'qwen-image-2.0',
       textModel: 'deepseek-chat',
       createdAt: '2026-03-28T08:00:00.000Z'
     }),
@@ -89,7 +89,7 @@ export function createSeedPatterns(placeholder) {
       sourceType: 'ai',
       prompt: '苗族风格、蓝白配色、蝴蝶图腾、刺绣质感、细节丰富',
       tags: ['苗族', '蝴蝶', '刺绣'],
-      imageModel: 'gpt-image-1.5',
+      imageModel: 'qwen-image-2.0',
       textModel: 'deepseek-chat',
       createdAt: '2026-03-27T09:20:00.000Z'
     }),

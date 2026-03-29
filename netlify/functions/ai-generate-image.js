@@ -1,6 +1,23 @@
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY
+const DASHSCOPE_API_KEY = process.env.DASHSCOPE_API_KEY || process.env.QWEN_API_KEY
+const DASHSCOPE_BASE_URL = (
+  process.env.DASHSCOPE_BASE_URL ||
+  process.env.QWEN_BASE_URL ||
+  'https://dashscope.aliyuncs.com'
+).replace(/\/$/, '')
 const NETLIFY_TOKEN = process.env.NETLIFY_ACCESS_TOKEN
 const SITE_ID = process.env.NETLIFY_SITE_ID
+const QWEN_IMAGE_MODEL = 'qwen-image-2.0'
+const DEFAULT_NEGATIVE_PROMPT = [
+  '低清晰度',
+  '模糊',
+  '文字乱码',
+  '比例失衡',
+  '肢体畸形',
+  '过度光滑',
+  '画面杂乱',
+  '边缘重复',
+  '明显AI伪影'
+].join('，')
 
 function json(statusCode, body) {
   return {
@@ -52,58 +69,95 @@ async function uploadBlob(name, contentType, base64) {
   return payload
 }
 
+async function downloadImageAsBase64(url) {
+  const response = await fetch(url)
+  if (!response.ok) {
+    const text = await response.text().catch(() => '')
+    throw new Error(`Qwen 图片下载失败: ${response.status} ${text}`)
+  }
+
+  const contentType = response.headers.get('content-type') || 'image/png'
+  const arrayBuffer = await response.arrayBuffer()
+  return {
+    base64: Buffer.from(arrayBuffer).toString('base64'),
+    contentType
+  }
+}
+
 export async function handler(event) {
   try {
     const body = JSON.parse(event.body || '{}')
     const prompt = body.prompt || '民族纹案，对称构图，纹样层叠'
+    const size = body.size || '1024*1024'
+    const negativePrompt = body.negativePrompt || DEFAULT_NEGATIVE_PROMPT
 
-    if (!OPENAI_API_KEY) {
+    if (!DASHSCOPE_API_KEY) {
       const fallbackBase64 = makeFallbackSvg(prompt)
       return json(200, {
         success: true,
         imageBase64: fallbackBase64,
         mimeType: 'image/svg+xml',
-        model: 'fallback-svg'
+        model: 'fallback-svg',
+        fallback: true,
+        message: '未配置 DASHSCOPE_API_KEY，已返回本地 SVG 占位图。'
       })
     }
 
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
+    const response = await fetch(`${DASHSCOPE_BASE_URL}/api/v1/services/aigc/multimodal-generation/generation`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${OPENAI_API_KEY}`
+        Authorization: `Bearer ${DASHSCOPE_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'gpt-image-1.5',
-        prompt,
-        size: '1024x1024'
+        model: QWEN_IMAGE_MODEL,
+        input: {
+          messages: [
+            {
+              role: 'user',
+              content: [{ text: prompt }]
+            }
+          ]
+        },
+        parameters: {
+          size,
+          watermark: false,
+          prompt_extend: true,
+          negative_prompt: negativePrompt
+        }
       })
     })
 
     if (!response.ok) {
       const text = await response.text()
-      throw new Error(`OpenAI 图片生成失败: ${response.status} ${text}`)
+      throw new Error(`Qwen 图片生成失败: ${response.status} ${text}`)
     }
 
     const payload = await response.json()
-    const imageBase64 = payload?.data?.[0]?.b64_json
-    if (!imageBase64) {
-      throw new Error('OpenAI 未返回图片内容')
+    const imageUrl = payload?.output?.choices?.[0]?.message?.content?.find((item) => item?.image)?.image || ''
+    if (!imageUrl) {
+      throw new Error(payload?.message || 'Qwen 未返回图片地址')
     }
 
-    let imageUrl = ''
+    const downloaded = await downloadImageAsBase64(imageUrl)
+    const imageBase64 = downloaded.base64
+    const mimeType = downloaded.contentType || 'image/png'
+    let persistedImageUrl = ''
     if (NETLIFY_TOKEN && SITE_ID) {
-      const fileName = `pattern-${Date.now()}.png`
-      const blob = await uploadBlob(fileName, 'image/png', imageBase64)
-      imageUrl = blob?.url || blob?.public_url || ''
+      const extension = mimeType.includes('jpeg') ? 'jpg' : 'png'
+      const fileName = `pattern-${Date.now()}.${extension}`
+      const blob = await uploadBlob(fileName, mimeType, imageBase64)
+      persistedImageUrl = blob?.url || blob?.public_url || ''
     }
 
     return json(200, {
       success: true,
       imageBase64,
-      mimeType: 'image/png',
-      imageUrl,
-      model: 'gpt-image-1.5'
+      mimeType,
+      imageUrl: persistedImageUrl || imageUrl,
+      sourceUrl: imageUrl,
+      model: QWEN_IMAGE_MODEL,
+      requestId: payload?.request_id || ''
     })
   } catch (error) {
     return json(500, { success: false, message: error.message })
