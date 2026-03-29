@@ -86,7 +86,12 @@
         <div class="page-header">
           <h1>剪纸纹样库</h1>
           <div class="toolbar">
-            <button class="btn-primary" id="importBtn">导入图片</button>
+            <button class="btn-primary upload-icon-btn" id="importBtn" aria-label="导入图片" title="导入图片">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-9Z" fill="none" stroke="currentColor" stroke-width="1.8"/>
+              </svg>
+            </button>
             <input type="file" id="fileInput" accept="image/*" style="display:none;">
             <input type="text" class="search-box" id="searchInput" placeholder="搜索作品名称或描述...">
             <select class="filter-select" id="filterSelect">

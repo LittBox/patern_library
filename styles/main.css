@@ -423,6 +423,23 @@ header {
   align-items: center;
 }
 
+.upload-icon-btn {
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-icon-btn svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
 .btn-primary {
   padding: 10px 20px;
   background: #000;
@@ -1216,11 +1233,26 @@ header {
   }
 
   .toolbar {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
   }
 
   .search-box {
-    min-width: auto;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .upload-icon-btn {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+  }
+
+  .filter-select {
+    grid-column: 1 / -1;
+    width: 100%;
   }
 
   .patterns-grid {
