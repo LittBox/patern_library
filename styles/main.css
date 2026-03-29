@@ -2081,16 +2081,58 @@ header {
   .detail-modal {
     width: calc(100vw - 20px);
     padding: 18px;
+    max-height: calc(100vh - 20px);
+    overflow-y: auto;
   }
 
   .detail-layout {
     margin-top: 50px;
+    gap: 18px;
+  }
+
+  .detail-visual,
+  .detail-content {
+    min-width: 0;
+  }
+
+  .detail-image {
+    max-width: 100%;
+  }
+
+  .detail-content h2 {
+    font-size: 20px;
+    line-height: 1.3;
+    margin: 8px 0 10px;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .detail-desc {
+    font-size: 13px;
+    line-height: 1.75;
+    word-break: break-word;
+    overflow-wrap: anywhere;
   }
 
   .creator-summary-metrics,
   .detail-grid,
   .ai-form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .detail-grid {
+    gap: 12px;
+    margin: 18px 0;
+  }
+
+  .detail-grid div {
+    padding: 14px;
+    min-width: 0;
+  }
+
+  .detail-grid dd {
+    word-break: break-word;
+    overflow-wrap: anywhere;
   }
 
   .pattern-meta,
@@ -2120,6 +2162,20 @@ header {
   .product-action-sep {
     min-width: 6px;
     font-size: 10px;
+  }
+
+  .detail-actions {
+    gap: 10px;
+  }
+
+  .action-plain {
+    width: 100%;
+    min-height: 46px;
+    padding: 0 14px;
+  }
+
+  .action-plain span {
+    font-size: 13px;
   }
 
   .mini-modal-actions {
