@@ -1,4 +1,4 @@
-# 民族纹案库
+# 非遗剪纸纹样库
 
 基于 `HTML + CSS + JavaScript + Netlify Functions` 的单页 H5 展示站，按技术文档实现了以下核心模块：
 

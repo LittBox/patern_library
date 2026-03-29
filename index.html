@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>民族纹案库</title>
+  <title>非遗剪纸纹样库</title>
   <link rel="preload" as="image" href="https://images.unsplash.com/photo-1578500494198-246f612d03b3?w=600&h=800&fit=crop" />
   <link rel="preload" as="image" href="https://images.unsplash.com/photo-1577720643272-265f434884f0?w=600&h=800&fit=crop" />
   <link rel="stylesheet" href="styles/reset.css">
@@ -14,10 +14,10 @@
     <nav class="nav">
       <ul>
         <li data-target="home">首页</li>
-        <li data-target="gallery">纹案库</li>
+        <li data-target="gallery">剪纸纹样库</li>
         <li data-target="market">商品展览</li>
         <li data-target="creator">创作者中心</li>
-        <li data-target="ai">AI 纹案生成</li>
+        <li data-target="ai">AI 剪纸纹样生成</li>
       </ul>
     </nav>
   </header>
@@ -44,17 +44,18 @@
 
         <!-- 右侧：项目介绍卡片 -->
         <div class="hero-info-section">
+          <img class="hero-paper-cut" src="/img/patterns/flower.png" alt="" aria-hidden="true" />
           <div class="info-card">
             <div class="info-header">
               <span class="info-date">2026 年 3 月</span>
             </div>
             <div class="info-title">
-              <h1>民族纹案库</h1>
+              <h1>非遗剪纸纹样库</h1>
               <h2>传承与创新的碰撞</h2>
             </div>
             <div class="info-description">
-              <p>欢迎来到民族纹案展示平台。我们致力于收集、展示和推广世界各地的民族纹案设计，为创作者和商家提供一个共享、交流和销售的空间。</p>
-              <p>通过 AI 技术和设计师之手，让传统民族纹样焕发新生。</p>
+              <p>欢迎来到非遗剪纸纹样展示平台。我们致力于收集、展示和推广各地剪纸纹样设计，为创作者和商家提供一个共享、交流和销售的空间。</p>
+              <p>通过 AI 技术和设计师之手，让传统非遗剪纸纹样焕发新生。</p>
             </div>
             <div class="info-tags">
               <span class="tag">民族文化</span>
@@ -72,7 +73,7 @@
       <!-- 下方：热门推荐区 -->
       <div class="home-featured">
         <div class="featured-header">
-          <h3>热门纹案推荐</h3>
+          <h3>热门剪纸纹样推荐</h3>
           <a href="#" class="featured-more">查看全部 →</a>
         </div>
         <div class="featured-grid" id="featuredPatterns">
@@ -83,7 +84,7 @@
     <section id="gallery" class="page gallery-page hidden">
       <div class="page-container">
         <div class="page-header">
-          <h1>纹案库</h1>
+          <h1>剪纸纹样库</h1>
           <div class="toolbar">
             <button class="btn-primary" id="importBtn">导入图片</button>
             <input type="file" id="fileInput" accept="image/*" style="display:none;">
@@ -159,8 +160,8 @@
             <img id="detailCreatorAvatar" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="创作者头像" loading="lazy" decoding="async" />
           </div>
           <div class="creator-details">
-            <h2 id="detailCreatorName">民族纹案设计师</h2>
-            <p id="detailCreatorBio">热爱传承与创新，专注民族纹案与文创设计</p>
+            <h2 id="detailCreatorName">非遗剪纸纹样设计师</h2>
+            <p id="detailCreatorBio">热爱传承与创新，专注非遗剪纸纹样与文创设计</p>
             <span class="creator-joindate">入驻时间：2026年3月28日</span>
           </div>
         </div>
@@ -215,7 +216,7 @@
     <section id="ai" class="page ai-page hidden">
       <div class="page-container">
         <div class="page-header">
-          <h1>AI 纹案生成</h1>
+          <h1>AI 剪纸纹样生成</h1>
           <p class="page-subtitle">按技术文档的两段式流程，先生成结构化文案，再调用 OpenAI 图片模型生成纹案图像。</p>
         </div>
         <div class="ai-layout">
@@ -223,23 +224,23 @@
             <div class="ai-form-grid">
               <label>
                 <span>主题</span>
-                <input id="themeInput" type="text" placeholder="例如：蝴蝶、回纹、山水吉纹">
+                <input id="themeInput" type="text" placeholder="例如：蝴蝶、回纹">
               </label>
               <label>
                 <span>民族风格</span>
-                <input id="styleInput" type="text" placeholder="例如：苗族、侗族、藏族">
+                <input id="styleInput" type="text" placeholder="例如：苗族、藏族">
               </label>
               <label>
                 <span>色彩倾向</span>
-                <input id="paletteInput" type="text" placeholder="例如：蓝白、红金、靛青">
+                <input id="paletteInput" type="text" placeholder="例如：蓝白、红金">
               </label>
               <label>
                 <span>构图风格</span>
-                <input id="compositionInput" type="text" placeholder="例如：对称、满版、边框式">
+                <input id="compositionInput" type="text" placeholder="例如：对称、边框式">
               </label>
               <label>
                 <span>应用场景</span>
-                <input id="usageInput" type="text" placeholder="例如：包装、海报、布料印花">
+                <input id="usageInput" type="text" placeholder="例如：包装、海报">
               </label>
             </div>
             <label class="textarea-label">

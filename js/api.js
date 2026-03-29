@@ -20,16 +20,16 @@ async function request(path, options = {}) {
 
 function buildMetaFallback(fields) {
   const parts = [
-    fields.theme || '民族纹案',
-    fields.ethnicStyle || '传统民族风格',
+    fields.theme || '非遗剪纸纹样',
+    fields.ethnicStyle || '传统剪纸风格',
     fields.palette || '层次分明的综合色彩',
     fields.composition || '对称装饰构图',
     fields.usage || '适用于文创包装与展陈'
   ].filter(Boolean)
 
   const title = [fields.ethnicStyle, fields.theme].filter(Boolean).join(' ') || 'AI 纹案作品'
-  const description = `围绕${fields.theme || '民族文化'}构建纹案主体，融入${fields.ethnicStyle || '民族传统'}的装饰语言，并结合${fields.usage || '文创展示'}场景优化构图。`
-  const explanation = `纹案以${fields.theme || '民族纹样'}为核心意象，通过${fields.palette || '综合色彩'}强化视觉节奏，适合用于${fields.usage || '文创设计'}。`.slice(0, 100)
+  const description = `围绕${fields.theme || '非遗剪纸文化'}构建纹样主体，融入${fields.ethnicStyle || '传统剪纸'}的装饰语言，并结合${fields.usage || '文创展示'}场景优化构图。`
+  const explanation = `纹样以${fields.theme || '非遗剪纸纹样'}为核心意象，通过${fields.palette || '综合色彩'}强化视觉节奏，适合用于${fields.usage || '文创设计'}。`.slice(0, 100)
 
   return {
     title,

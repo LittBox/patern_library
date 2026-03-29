@@ -26,7 +26,7 @@ const creatorDetailSection = document.getElementById('creator-detail')
 const aiResult = document.getElementById('aiResult')
 const uploadResult = document.getElementById('uploadResult')
 
-const PLACEHOLDER_SVG = (width = 640, height = 640, text = '民族纹案') => {
+const PLACEHOLDER_SVG = (width = 640, height = 640, text = '非遗剪纸纹样') => {
   const safeText = escapeHtml(text)
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
@@ -437,7 +437,7 @@ function renderPatterns() {
         <div class="pattern-card-info">
           <div class="title-row">
             <h3 class="pattern-card-title">${escapeHtml(pattern.title)}</h3>
-            <span class="pill">${pattern.onShelf ? '已上架' : '未上架'}</span>
+            <span class="pill ${pattern.onShelf ? 'status-on-shelf' : 'status-off-shelf'}">${pattern.onShelf ? '已上架' : '未上架'}</span>
           </div>
           <p class="pattern-card-desc">${escapeHtml(pattern.description || '待补充作品简介')}</p>
           <div class="pattern-meta">
@@ -476,7 +476,7 @@ function renderProducts() {
   })
 
   if (!products.length) {
-    container.innerHTML = '<div class="empty-state"><p>还没有上架商品，先去纹案库选择作品上架吧。</p></div>'
+    container.innerHTML = '<div class="empty-state"><p>还没有上架商品，先去剪纸纹样库选择作品上架吧。</p></div>'
     return
   }
 
@@ -512,7 +512,6 @@ function renderCreatorOverview() {
           <img src="${creator.avatar || PLACEHOLDER_SVG(220, 220, creator.name)}" alt="${escapeHtml(creator.name)}">
         </div>
         <div class="creator-card-info">
-          <p class="eyebrow">创作者资料</p>
           <h2 class="creator-card-name">${escapeHtml(creator.name)}</h2>
           <p class="creator-card-bio">${escapeHtml(creator.bio)}</p>
           <p class="creator-card-join">入驻时间 ${formatDate(creator.joinedAt)}</p>
@@ -769,8 +768,8 @@ async function handleUpload(file) {
 
   const newPattern = createPatternRecord({
     title: file.name.replace(/\.[^.]+$/, ''),
-    description: '自主上传的民族纹案作品，等待补充更多讲解信息。',
-    explanation: '上传作品已进入纹案库，可继续完善名称、简介和货架价格。',
+    description: '自主上传的非遗剪纸纹样作品，等待补充更多讲解信息。',
+    explanation: '上传作品已进入剪纸纹样库，可继续完善名称、简介和货架价格。',
     imageUrl: uploaded.imageUrl || base64,
     sourceType: 'upload',
     prompt: '',
@@ -840,7 +839,7 @@ async function handleGenerate() {
             <p>${escapeHtml(meta.image_prompt)}</p>
           </div>
           <div class="result-actions">
-            <button class="btn-primary" id="saveAiPatternBtn">保存到纹案库</button>
+            <button class="btn-primary" id="saveAiPatternBtn">保存到剪纸纹样库</button>
           </div>
         </div>
       </article>
