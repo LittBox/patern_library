@@ -86,8 +86,10 @@ cp .env.example .env
 
 ## 技术文档
 
-- 当前版本文档：[tech_doc_qwen_image_generation.md](/Users/admin/Desktop/patern_library/tech_doc_qwen_image_generation.md)
-- 旧版 OpenAI 文档保留作历史参考：[tech_doc_openai_image_generation.md](/Users/admin/Desktop/patern_library/tech_doc_openai_image_generation.md)
+- 当前版本文档：[tech_doc_qwen_image_generation.md](/Users/admin/Desktop/patern_library/docs/tech_doc_qwen_image_generation.md)
+- 旧版 OpenAI 文档保留作历史参考：[tech_doc_openai_image_generation.md](/Users/admin/Desktop/patern_library/docs/tech_doc_openai_image_generation.md)
+- 前端样式与交互偏好总结：[frontend_style_summary.md](/Users/admin/Desktop/patern_library/docs/frontend_style_summary.md)
+- Netlify 部署踩坑与注意事项：[netlify_deploy_notes.md](/Users/admin/Desktop/patern_library/docs/netlify_deploy_notes.md)
 
 ## 测试
 
