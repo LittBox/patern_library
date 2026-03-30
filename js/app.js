@@ -595,7 +595,14 @@ function renderCreatorOverview() {
         </div>
       </div>
       <div class="creator-card-footer">
-        <button class="btn-primary" id="viewCreatorDetailBtn">详情</button>
+        <button class="creator-card-link" id="viewCreatorDetailBtn" aria-label="查看创作者详情">
+          <span>详情</span>
+          <span class="creator-card-link-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </button>
       </div>
     </article>
   `
@@ -643,8 +650,26 @@ function renderCreatorDetail() {
           <div class="work-item-sub">${pattern.sourceType === 'ai' ? 'AI 生成' : '自主上传'} · ${formatDate(pattern.createdAt)}</div>
         </div>
         <div class="work-item-actions">
-          <button class="btn-tiny" data-action="detail" data-id="${pattern.id}">详情</button>
-          <button class="btn-tiny" data-action="shelf" data-id="${pattern.id}">${pattern.onShelf ? '价格' : '上架'}</button>
+          <button
+            class="btn-tiny recent-work-action"
+            data-action="detail"
+            data-id="${pattern.id}"
+            aria-label="查看详情"
+            title="查看详情"
+          >
+            <span class="recent-work-action-icon" aria-hidden="true">${getActionIcon('detail')}</span>
+            <span class="recent-work-action-label">详情</span>
+          </button>
+          <button
+            class="btn-tiny recent-work-action"
+            data-action="shelf"
+            data-id="${pattern.id}"
+            aria-label="${pattern.onShelf ? '修改价格' : '放入货架'}"
+            title="${pattern.onShelf ? '修改价格' : '放入货架'}"
+          >
+            <span class="recent-work-action-icon" aria-hidden="true">${getActionIcon(pattern.onShelf ? 'price' : 'shelf')}</span>
+            <span class="recent-work-action-label">${pattern.onShelf ? '价格' : '上架'}</span>
+          </button>
         </div>
       </div>
     `).join('')

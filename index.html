@@ -178,7 +178,11 @@
       <div class="page-container">
         <!-- 返回按钮 -->
         <div class="detail-header">
-          <button class="btn-back" id="backToCreator">← 返回</button>
+          <button class="btn-back" id="backToCreator" aria-label="返回创作者中心" title="返回创作者中心">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M15 5 8 12l7 7" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
           <h1>创作者详情</h1>
         </div>
 
@@ -245,7 +249,6 @@
       <div class="page-container">
         <div class="page-header">
           <h1>AI 剪纸纹样生成</h1>
-          <p class="page-subtitle">按技术文档的两段式流程，先生成结构化文案，再调用 Qwen Image 2.0 生成剪纸纹样图像。</p>
         </div>
         <div class="ai-layout">
           <div class="ai-form-card">
