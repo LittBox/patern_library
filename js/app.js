@@ -35,6 +35,46 @@ const navToggle = document.getElementById('navToggle')
 const navDrawer = document.getElementById('mobileNavDrawer')
 const navDrawerBackdrop = document.getElementById('navDrawerBackdrop')
 const navDrawerClose = document.getElementById('navDrawerClose')
+const solarDateLabel = document.getElementById('solarDateLabel')
+const lunarDateLabel = document.getElementById('lunarDateLabel')
+const solarTermLabel = document.getElementById('solarTermLabel')
+
+const LUNAR_DAY_NAMES = [
+  '',
+  '初一', '初二', '初三', '初四', '初五',
+  '初六', '初七', '初八', '初九', '初十',
+  '十一', '十二', '十三', '十四', '十五',
+  '十六', '十七', '十八', '十九', '二十',
+  '廿一', '廿二', '廿三', '廿四', '廿五',
+  '廿六', '廿七', '廿八', '廿九', '三十'
+]
+
+const SOLAR_TERMS = [
+  { name: '小寒', month: 1, coefficient: 5.4055 },
+  { name: '大寒', month: 1, coefficient: 20.12 },
+  { name: '立春', month: 2, coefficient: 3.87 },
+  { name: '雨水', month: 2, coefficient: 18.73 },
+  { name: '惊蛰', month: 3, coefficient: 5.63 },
+  { name: '春分', month: 3, coefficient: 20.646 },
+  { name: '清明', month: 4, coefficient: 4.81 },
+  { name: '谷雨', month: 4, coefficient: 20.1 },
+  { name: '立夏', month: 5, coefficient: 5.52 },
+  { name: '小满', month: 5, coefficient: 21.04 },
+  { name: '芒种', month: 6, coefficient: 5.678 },
+  { name: '夏至', month: 6, coefficient: 21.37 },
+  { name: '小暑', month: 7, coefficient: 7.108 },
+  { name: '大暑', month: 7, coefficient: 22.83 },
+  { name: '立秋', month: 8, coefficient: 7.5 },
+  { name: '处暑', month: 8, coefficient: 23.13 },
+  { name: '白露', month: 9, coefficient: 7.646 },
+  { name: '秋分', month: 9, coefficient: 23.042 },
+  { name: '寒露', month: 10, coefficient: 8.318 },
+  { name: '霜降', month: 10, coefficient: 23.438 },
+  { name: '立冬', month: 11, coefficient: 7.438 },
+  { name: '小雪', month: 11, coefficient: 22.36 },
+  { name: '大雪', month: 12, coefficient: 7.18 },
+  { name: '冬至', month: 12, coefficient: 21.94 }
+]
 
 const PLACEHOLDER_SVG = (width = 640, height = 640, text = '非遗剪纸纹样') => {
   const safeText = escapeHtml(text)
@@ -83,6 +123,21 @@ let carouselTimer = null
 let activePatternId = null
 let activeCreatorId = null
 
+const AI_LOADING_STEPS = {
+  meta: {
+    title: '正在生成文案',
+    detail: '整理作品名称、简介与讲解词'
+  },
+  image: {
+    title: '正在生成纹案图片',
+    detail: '调用模型生成预览图'
+  },
+  finalize: {
+    title: '正在整理结果',
+    detail: '组合图片、文案与上架信息'
+  }
+}
+
 function resetAiResultPanel() {
   if (!aiResult) return
   aiResult.innerHTML = `
@@ -90,6 +145,130 @@ function resetAiResultPanel() {
       <p>填写左侧描述后，这里会展示作品名称、简介、讲解词和生成的纹案图片。</p>
     </div>
   `
+}
+
+function wait(ms) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms)
+  })
+}
+
+function renderAiLoadingState({ visibleSteps = ['meta'], activeStep = 'meta', completedSteps = [] } = {}) {
+  if (!aiResult) return
+
+  const completed = new Set(completedSteps)
+  const stepsMarkup = visibleSteps
+    .map((key) => {
+      const step = AI_LOADING_STEPS[key]
+      if (!step) return ''
+
+      const status = completed.has(key) ? 'done' : key === activeStep ? 'loading' : 'waiting'
+      const statusText = status === 'done'
+        ? '已完成'
+        : status === 'loading'
+          ? '进行中'
+          : '等待中'
+
+      return `
+        <li class="ai-task-item ai-task-item-${status}">
+          <span class="ai-task-indicator ai-task-indicator-${status}" aria-hidden="true">
+            ${status === 'done'
+              ? `
+                <svg viewBox="0 0 20 20" class="ai-task-check">
+                  <path d="M4.5 10.5 8.2 14 15.5 6.5" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              `
+              : status === 'loading'
+                ? '<span class="ai-task-spinner"></span>'
+                : '<span class="ai-task-dot"></span>'}
+          </span>
+          <div class="ai-task-body">
+            <div class="ai-task-row">
+              <strong>${escapeHtml(step.title)}</strong>
+              <span>${escapeHtml(statusText)}</span>
+            </div>
+            <p>${escapeHtml(step.detail)}</p>
+          </div>
+        </li>
+      `
+    })
+    .join('')
+
+  const activeTitle = AI_LOADING_STEPS[activeStep]?.title || '正在生成中'
+
+  aiResult.innerHTML = `
+    <section class="ai-loading-card" aria-live="polite">
+      <div class="ai-loading-visual">
+        <span class="ai-loading-ring" aria-hidden="true"></span>
+        <div class="ai-loading-copy">
+          <p class="eyebrow">AI 生成中</p>
+          <h3>正在生成剪纸纹案</h3>
+          <p>${escapeHtml(activeTitle)}，请稍候。</p>
+        </div>
+      </div>
+      <div class="ai-task-board">
+        <div class="ai-task-board-head">
+          <strong>当前任务</strong>
+          <span>完成一个任务后会自动进入下一步</span>
+        </div>
+        <ol class="ai-task-list">
+          ${stepsMarkup}
+        </ol>
+      </div>
+    </section>
+  `
+}
+
+function padNumber(value) {
+  return String(value).padStart(2, '0')
+}
+
+function formatSolarDate(date) {
+  return `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}-${padNumber(date.getDate())}`
+}
+
+function formatLunarDate(date) {
+  try {
+    const formatter = new Intl.DateTimeFormat('zh-CN-u-ca-chinese', {
+      month: 'long',
+      day: 'numeric'
+    })
+    const parts = formatter.formatToParts(date)
+    const month = parts.find((part) => part.type === 'month')?.value || ''
+    const dayNumber = Number(parts.find((part) => part.type === 'day')?.value || '')
+    const day = LUNAR_DAY_NAMES[dayNumber] || ''
+    return month && day ? `农历${month}${day}` : ''
+  } catch {
+    return ''
+  }
+}
+
+function getSolarTermDay(year, index) {
+  const yearWithinCentury = year % 100
+  const coefficient = SOLAR_TERMS[index]?.coefficient || 0
+  return Math.floor(yearWithinCentury * 0.2422 + coefficient) - Math.floor((yearWithinCentury - 1) / 4)
+}
+
+function getCurrentSolarTerm(date) {
+  const year = date.getFullYear()
+  const currentTerm = SOLAR_TERMS
+    .map((term, index) => ({
+      name: term.name,
+      date: new Date(year, term.month - 1, getSolarTermDay(year, index), 12)
+    }))
+    .filter((term) => date >= term.date)
+    .pop()
+
+  return currentTerm?.name || '冬至'
+}
+
+function renderHeaderMeta() {
+  if (!solarDateLabel || !lunarDateLabel || !solarTermLabel) return
+
+  const now = new Date()
+  solarDateLabel.textContent = formatSolarDate(now)
+  lunarDateLabel.textContent = formatLunarDate(now) || '农历日期'
+  solarTermLabel.textContent = `节气·${getCurrentSolarTerm(now)}`
 }
 
 function normalizeAssetUrl(url) {
@@ -949,11 +1128,29 @@ async function handleGenerate() {
   const button = document.getElementById('generateBtn')
   button.disabled = true
   button.textContent = '生成中...'
-  aiResult.innerHTML = '<div class="inline-feedback">正在生成结构化文案与纹案图片，请稍候。</div>'
+  renderAiLoadingState({
+    visibleSteps: ['meta'],
+    activeStep: 'meta',
+    completedSteps: []
+  })
 
   try {
     const meta = await api.generatePatternMeta(fields)
+    renderAiLoadingState({
+      visibleSteps: ['meta', 'image'],
+      activeStep: 'image',
+      completedSteps: ['meta']
+    })
+
     const image = await api.generatePatternImage(meta.image_prompt)
+    renderAiLoadingState({
+      visibleSteps: ['meta', 'image', 'finalize'],
+      activeStep: 'finalize',
+      completedSteps: ['meta', 'image']
+    })
+
+    await wait(32)
+
     const previewUrl = image.imageUrl || `data:${image.mimeType};base64,${image.imageBase64}`
     const defaultAiPrice = 99
 
@@ -1276,6 +1473,7 @@ async function bootstrapFromServer() {
 
 async function init() {
   ensureStateLoaded()
+  renderHeaderMeta()
   await hydrateLocalPatternImages()
   await bootstrapFromServer()
   await bootstrapLocalAssets()

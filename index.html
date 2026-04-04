@@ -11,20 +11,35 @@
 </head>
 <body>
   <header>
-    <button class="nav-toggle" id="navToggle" type="button" aria-label="打开导航菜单" aria-expanded="false" aria-controls="mobileNavDrawer">
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
-    <nav class="nav">
-      <ul>
-        <li data-target="home">首页</li>
-        <li data-target="gallery">剪纸纹样库</li>
-        <li data-target="market">商品展览</li>
-        <li data-target="creator">创作者中心</li>
-        <li data-target="ai">AI 剪纸纹样生成</li>
-      </ul>
-    </nav>
+    <div class="header-shell">
+      <div class="header-top">
+        <div class="header-brand">
+          <img class="header-logo" src="/img/patterns/logo.png" alt="非遗剪纸纹样库 logo" loading="eager" decoding="async" />
+          <div class="header-brand-copy">
+            <strong class="header-brand-title">非遗剪纸纹样库</strong>
+          </div>
+        </div>
+        <div class="header-meta" aria-label="日期与节气信息">
+          <span id="solarDateLabel">2026-04-04</span>
+          <span id="lunarDateLabel">农历二月十七</span>
+          <span id="solarTermLabel">节气·春分</span>
+        </div>
+        <button class="nav-toggle" id="navToggle" type="button" aria-label="打开导航菜单" aria-expanded="false" aria-controls="mobileNavDrawer">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+      <nav class="nav" aria-label="主导航">
+        <ul>
+          <li data-target="home">首页</li>
+          <li data-target="gallery">剪纸纹样库</li>
+          <li data-target="market">商品展览</li>
+          <li data-target="creator">创作者中心</li>
+          <li data-target="ai">AI 剪纸纹样生成</li>
+        </ul>
+      </nav>
+    </div>
   </header>
   <div class="nav-drawer-backdrop hidden" id="navDrawerBackdrop"></div>
   <aside class="nav-drawer hidden" id="mobileNavDrawer" aria-hidden="true">
