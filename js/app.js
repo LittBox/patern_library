@@ -171,7 +171,7 @@ function renderCulturalLoaderFigure(layerClass = '') {
   return `
     <img
       class="${className}"
-      src="/img/.svg/loading.svg"
+      src="/img/svg/loading.svg"
       alt=""
       aria-hidden="true"
       decoding="async"
