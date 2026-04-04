@@ -76,6 +76,7 @@ const SOLAR_TERMS = [
   { name: '冬至', month: 12, coefficient: 21.94 }
 ]
 
+const EMPTY_IMAGE_SRC = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='
 const PLACEHOLDER_SVG = (width = 640, height = 640, text = '非遗剪纸纹样') => {
   const safeText = escapeHtml(text)
   const svg = `
@@ -136,6 +137,163 @@ const AI_LOADING_STEPS = {
     title: '正在整理结果',
     detail: '组合图片、文案与上架信息'
   }
+}
+
+function renderCulturalLoaderFigure(layerClass = '') {
+  const className = ['cultural-loader-figure', layerClass].filter(Boolean).join(' ')
+  return `
+    <img
+      class="${className}"
+      src="/img/.svg/loading.svg"
+      alt=""
+      aria-hidden="true"
+      decoding="async"
+    >
+  `
+}
+
+function renderCulturalLoaderMarkup(label = '纹样载入中') {
+  return `
+    <div class="cultural-image-loader" aria-hidden="true">
+      <div class="cultural-loader-stage">
+        <div class="cultural-loader-clouds" aria-hidden="true">
+          ${renderCulturalLoaderFigure('cultural-loader-figure-far')}
+          ${renderCulturalLoaderFigure('cultural-loader-figure-back')}
+          <span class="cultural-loader-trace"></span>
+          ${renderCulturalLoaderFigure('cultural-loader-figure-front')}
+        </div>
+        <div class="cultural-loader-lines" aria-hidden="true">
+          <span class="cultural-loader-streak cultural-loader-streak-a"></span>
+          <span class="cultural-loader-streak cultural-loader-streak-b"></span>
+          <span class="cultural-loader-streak cultural-loader-streak-c"></span>
+          <span class="cultural-loader-streak cultural-loader-streak-d"></span>
+        </div>
+      </div>
+      <p class="cultural-loader-text">${escapeHtml(label)}</p>
+    </div>
+  `
+}
+
+function renderDeferredImageMarkup({
+  src = '',
+  alt = '',
+  className = '',
+  shellClass = '',
+  loadingLabel = '纹样载入中'
+} = {}) {
+  const shellClasses = ['cultural-image-shell', shellClass].filter(Boolean).join(' ')
+
+  return `
+    <div class="${shellClasses}">
+      <img
+        src="${EMPTY_IMAGE_SRC}"
+        data-deferred-src="${escapeHtml(src || '')}"
+        data-loading-label="${escapeHtml(loadingLabel)}"
+        alt="${escapeHtml(alt)}"
+        class="${className}"
+        loading="lazy"
+        decoding="async"
+      >
+      ${renderCulturalLoaderMarkup(loadingLabel)}
+    </div>
+  `
+}
+
+function ensureCulturalImageShell(image, { shellClass = '', loadingLabel = '纹样载入中' } = {}) {
+  if (!image?.parentElement) return null
+
+  let shell = image.closest('.cultural-image-shell')
+  if (!shell) {
+    shell = document.createElement('div')
+    shell.className = ['cultural-image-shell', shellClass].filter(Boolean).join(' ')
+    image.parentElement.insertBefore(shell, image)
+    shell.appendChild(image)
+    shell.insertAdjacentHTML('beforeend', renderCulturalLoaderMarkup(loadingLabel))
+  } else if (shellClass) {
+    shellClass.split(/\s+/).filter(Boolean).forEach((name) => shell.classList.add(name))
+  }
+
+  shell.querySelector('.cultural-loader-text')?.replaceChildren(document.createTextNode(loadingLabel))
+  return shell
+}
+
+function setDeferredImage(
+  image,
+  targetSrc,
+  {
+    alt = '',
+    shellClass = '',
+    loadingLabel = '纹样载入中',
+    fallbackText = ''
+  } = {}
+) {
+  if (!image) return Promise.resolve(false)
+
+  const shell = ensureCulturalImageShell(image, { shellClass, loadingLabel })
+  const resolvedSrc = targetSrc || image.dataset.deferredSrc || ''
+  const safeFallbackText = fallbackText || alt || '非遗剪纸纹样'
+
+  image.dataset.deferredSrc = resolvedSrc
+  image.dataset.loadingLabel = loadingLabel
+  if (alt) {
+    image.alt = alt
+  }
+
+  shell?.classList.add('is-loading')
+  shell?.classList.remove('is-loaded', 'is-error')
+  image.classList.remove('is-ready')
+
+  if (!resolvedSrc) {
+    image.src = PLACEHOLDER_SVG(720, 720, safeFallbackText)
+    image.classList.add('is-ready')
+    shell?.classList.remove('is-loading')
+    shell?.classList.add('is-loaded', 'is-error')
+    return Promise.resolve(false)
+  }
+
+  const token = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+  image.dataset.loadToken = token
+
+  return new Promise((resolve) => {
+    const preloader = new Image()
+    preloader.decoding = 'async'
+
+    const finalize = (didLoad) => {
+      if (image.dataset.loadToken !== token) {
+        resolve(false)
+        return
+      }
+
+      image.src = didLoad ? resolvedSrc : PLACEHOLDER_SVG(720, 720, safeFallbackText)
+      image.classList.add('is-ready')
+      shell?.classList.remove('is-loading')
+      shell?.classList.add('is-loaded')
+      shell?.classList.toggle('is-error', !didLoad)
+      resolve(didLoad)
+    }
+
+    preloader.onload = () => finalize(true)
+    preloader.onerror = () => finalize(false)
+    preloader.src = resolvedSrc
+
+    if (preloader.complete) {
+      finalize(preloader.naturalWidth > 0)
+    }
+  })
+}
+
+function hydrateDeferredImages(root = document) {
+  const images = root?.matches?.('img[data-deferred-src]')
+    ? [root]
+    : [...(root?.querySelectorAll?.('img[data-deferred-src]') || [])]
+
+  images.forEach((image) => {
+    setDeferredImage(image, image.dataset.deferredSrc, {
+      alt: image.alt,
+      loadingLabel: image.dataset.loadingLabel || '纹样载入中',
+      fallbackText: image.alt || '非遗剪纸纹样'
+    }).catch(() => {})
+  })
 }
 
 function resetAiResultPanel() {
@@ -675,7 +833,13 @@ function renderFeaturedPatterns() {
 
   container.innerHTML = featured.map((pattern) => `
     <article class="pattern-card featured-card" data-pattern-id="${pattern.id}">
-      <img src="${pattern.imageUrl}" alt="${escapeHtml(pattern.title)}" class="pattern-card-image">
+      ${renderDeferredImageMarkup({
+        src: pattern.imageUrl,
+        alt: pattern.title,
+        className: 'pattern-card-image',
+        shellClass: 'pattern-card-media',
+        loadingLabel: '热门纹样载入中'
+      })}
       <div class="pattern-card-info">
         <p class="pattern-card-source">${pattern.sourceType === 'ai' ? 'AI 生成' : '自主上传'}</p>
         <h4 class="pattern-card-title">${escapeHtml(pattern.title)}</h4>
@@ -683,6 +847,8 @@ function renderFeaturedPatterns() {
       </div>
     </article>
   `).join('')
+
+  hydrateDeferredImages(container)
 }
 
 function renderPatterns() {
@@ -698,7 +864,13 @@ function renderPatterns() {
 
     return patterns.map((pattern) => `
       <article class="pattern-card" data-pattern-id="${pattern.id}">
-        <img src="${pattern.imageUrl}" alt="${escapeHtml(pattern.title)}" class="pattern-card-image">
+        ${renderDeferredImageMarkup({
+          src: pattern.imageUrl,
+          alt: pattern.title,
+          className: 'pattern-card-image',
+          shellClass: 'pattern-card-media',
+          loadingLabel: '纹样载入中'
+        })}
         <div class="pattern-card-info">
           <div class="title-row">
             <h3 class="pattern-card-title">${escapeHtml(pattern.title)}</h3>
@@ -728,6 +900,9 @@ function renderPatterns() {
     filtered.filter((pattern) => pattern.sourceType === 'upload'),
     '当前没有匹配的自主上传作品。'
   )
+
+  hydrateDeferredImages(aiContainer)
+  hydrateDeferredImages(uploadContainer)
 }
 
 function renderProducts() {
@@ -747,7 +922,13 @@ function renderProducts() {
 
   container.innerHTML = products.map((product) => `
     <article class="product-card" data-product-id="${product.id}">
-      <img src="${product.imageUrl}" alt="${escapeHtml(product.title)}" class="product-card-image">
+      ${renderDeferredImageMarkup({
+        src: product.imageUrl,
+        alt: product.title,
+        className: 'product-card-image',
+        shellClass: 'product-card-media',
+        loadingLabel: '商品图片载入中'
+      })}
       <div class="product-card-content">
         <h3 class="product-card-name">${escapeHtml(product.title)}</h3>
         <p class="product-card-desc">${escapeHtml(product.description || '待补充作品简介')}</p>
@@ -765,6 +946,8 @@ function renderProducts() {
       </div>
     </article>
   `).join('')
+
+  hydrateDeferredImages(container)
 }
 
 function renderCreatorOverview() {
@@ -877,8 +1060,12 @@ function renderCarousel() {
   `).join('')
 
   const current = carouselImages[currentCarouselIndex]
-  image.src = current.imageUrl
-  image.alt = current.title
+  setDeferredImage(image, current.imageUrl, {
+    alt: current.title,
+    shellClass: 'carousel-image-shell',
+    loadingLabel: '轮播纹样载入中',
+    fallbackText: current.title
+  }).catch(() => {})
 }
 
 function startCarousel() {
@@ -1011,7 +1198,13 @@ function createPatternDetailModal(pattern) {
       <button class="modal-close" aria-label="关闭">×</button>
       <div class="detail-layout">
         <div class="detail-visual">
-          <img src="${pattern.imageUrl}" alt="${escapeHtml(pattern.title)}" class="detail-image">
+          ${renderDeferredImageMarkup({
+            src: pattern.imageUrl,
+            alt: pattern.title,
+            className: 'detail-image',
+            shellClass: 'detail-image-shell',
+            loadingLabel: '作品细节载入中'
+          })}
         </div>
         <div class="detail-content">
           <h2>${escapeHtml(pattern.title)}</h2>
@@ -1044,6 +1237,7 @@ function createPatternDetailModal(pattern) {
   `
 
   document.body.appendChild(overlay)
+  hydrateDeferredImages(overlay)
 
   overlay.addEventListener('click', (event) => {
     if (event.target === overlay || event.target.closest('.modal-close')) {
@@ -1185,7 +1379,13 @@ async function handleGenerate() {
     aiResult.innerHTML = `
       <article class="ai-result-card">
         <div class="ai-result-visual">
-          <img src="${previewUrl}" alt="${escapeHtml(meta.title)}" class="ai-result-image">
+          ${renderDeferredImageMarkup({
+            src: previewUrl,
+            alt: meta.title,
+            className: 'ai-result-image',
+            shellClass: 'ai-result-image-shell',
+            loadingLabel: '生成结果载入中'
+          })}
         </div>
         <div class="ai-result-content">
           <p class="eyebrow">AI 生成结果</p>
@@ -1218,6 +1418,7 @@ async function handleGenerate() {
         </div>
       </article>
     `
+    hydrateDeferredImages(aiResult)
 
     document.getElementById('saveAiPatternBtn')?.addEventListener('click', async () => {
       if (!state.aiDraft || state.aiDraft.saved || state.aiDraft.saving) {
