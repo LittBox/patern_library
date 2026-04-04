@@ -1656,15 +1656,17 @@ function createPatternDetailModal(pattern) {
           })}
         </div>
         <div class="detail-content">
-          <h2>${escapeHtml(pattern.title)}</h2>
-          <p class="detail-desc">${escapeHtml(pattern.description || '待补充作品简介')}</p>
+          <div class="detail-copy">
+            <h2>${escapeHtml(pattern.title)}</h2>
+            <p class="detail-desc">${escapeHtml(pattern.description || '待补充作品简介')}</p>
+          </div>
           <dl class="detail-grid">
-            <div><dt>讲解词</dt><dd>${escapeHtml(pattern.explanation || '暂无讲解词')}</dd></div>
-            <div><dt>来源类型</dt><dd>${pattern.sourceType === 'ai' ? 'AI 生成' : '自主上传'}</dd></div>
-            <div><dt>创建时间</dt><dd>${formatDate(pattern.createdAt)}</dd></div>
-            <div><dt>标签</dt><dd>${escapeHtml(pattern.tags?.join(' / ') || '未设置')}</dd></div>
-            <div><dt>状态</dt><dd>${pattern.onShelf ? `已上架 · ${formatCurrency(pattern.price || 0)}` : '未上架'}</dd></div>
-            <div><dt>提示词</dt><dd>${escapeHtml(pattern.prompt || '无')}</dd></div>
+            <div class="detail-panel detail-panel-rich"><dt>讲解词</dt><dd>${escapeHtml(pattern.explanation || '暂无讲解词')}</dd></div>
+            <div class="detail-panel detail-panel-meta"><dt>来源类型</dt><dd>${pattern.sourceType === 'ai' ? 'AI 生成' : '自主上传'}</dd></div>
+            <div class="detail-panel detail-panel-meta"><dt>创建时间</dt><dd>${formatDate(pattern.createdAt)}</dd></div>
+            <div class="detail-panel detail-panel-meta"><dt>标签</dt><dd>${escapeHtml(pattern.tags?.join(' / ') || '未设置')}</dd></div>
+            <div class="detail-panel detail-panel-meta"><dt>状态</dt><dd>${pattern.onShelf ? `已上架 · ${formatCurrency(pattern.price || 0)}` : '未上架'}</dd></div>
+            <div class="detail-panel detail-panel-rich"><dt>提示词</dt><dd>${escapeHtml(pattern.prompt || '无')}</dd></div>
           </dl>
           <div class="detail-actions">
             <button class="btn-secondary action-plain action-plain-edit" data-modal-action="edit" aria-label="修改名称和简介" title="修改名称和简介">

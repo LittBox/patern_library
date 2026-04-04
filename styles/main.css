@@ -6433,3 +6433,240 @@ header::before {
     font-size: 22px;
   }
 }
+
+/* ===== 纹样详情弹窗呼吸感优化 ===== */
+.detail-modal {
+  width: min(1220px, calc(100vw - 104px)) !important;
+  max-height: calc(100vh - 72px);
+  padding: 74px 46px 36px !important;
+  border-radius: 34px;
+  overflow: auto;
+  box-shadow: 0 24px 54px rgba(132, 49, 31, 0.12) !important;
+}
+
+.detail-layout {
+  grid-template-columns: minmax(340px, 420px) minmax(0, 1fr);
+  gap: 52px !important;
+  align-items: start;
+  margin-top: 0 !important;
+}
+
+.detail-visual {
+  padding: 16px !important;
+  border-radius: 30px;
+  align-self: start;
+}
+
+.detail-image-shell {
+  display: block;
+}
+
+.detail-image {
+  padding: 14px;
+  border-width: 14px;
+  border-radius: 14px;
+  box-shadow:
+    inset 0 0 0 1px rgba(131, 82, 46, 0.12),
+    0 22px 38px rgba(86, 32, 24, 0.12);
+}
+
+.detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-width: 0;
+  padding-top: 10px;
+}
+
+.detail-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 760px;
+}
+
+.detail-content h2 {
+  margin: 0 !important;
+  font-size: clamp(38px, 4vw, 56px);
+  line-height: 1.16;
+  letter-spacing: 0.01em;
+}
+
+.detail-desc {
+  margin: 0;
+  max-width: 16.5em;
+  font-size: 18px;
+  line-height: 1.9;
+}
+
+.detail-grid {
+  margin: 0 !important;
+  gap: 18px 22px !important;
+}
+
+.detail-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 156px;
+  padding: 22px 24px 24px !important;
+  border-radius: 22px !important;
+  background: var(--surface-strong) !important;
+  box-shadow: 0 10px 24px rgba(177, 35, 28, 0.06) !important;
+}
+
+.detail-panel-rich {
+  grid-column: 1 / -1;
+  min-height: 0;
+}
+
+.detail-grid dt {
+  margin-bottom: 0 !important;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+.detail-grid dd {
+  font-size: 16px;
+  line-height: 1.88 !important;
+}
+
+.detail-actions {
+  gap: 14px 16px !important;
+  padding-top: 12px;
+}
+
+.action-plain {
+  min-height: 50px;
+  padding: 0 22px !important;
+}
+
+.modal-close {
+  top: 20px;
+  right: 22px;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--accent) !important;
+  color: var(--bg) !important;
+  box-shadow: 0 10px 20px rgba(177, 35, 28, 0.18);
+  z-index: 12 !important;
+}
+
+.mini-modal-close {
+  z-index: 12 !important;
+}
+
+.mini-modal-header {
+  padding-right: 76px;
+}
+
+@media (max-width: 1180px) {
+  .detail-modal {
+    width: min(1080px, calc(100vw - 56px)) !important;
+    padding: 68px 34px 28px !important;
+  }
+
+  .detail-layout {
+    gap: 36px !important;
+  }
+
+  .detail-content h2 {
+    font-size: clamp(34px, 4vw, 46px);
+  }
+
+  .detail-desc {
+    font-size: 17px;
+  }
+}
+
+@media (max-width: 960px) {
+  .detail-modal {
+    width: calc(100vw - 24px) !important;
+    max-height: calc(100vh - 24px);
+    padding: 62px 20px 22px !important;
+  }
+
+  .detail-layout {
+    gap: 28px !important;
+  }
+
+  .detail-visual {
+    padding: 12px !important;
+  }
+
+  .detail-content {
+    gap: 22px;
+    padding-top: 0;
+  }
+
+  .detail-copy {
+    gap: 14px;
+    max-width: none;
+  }
+
+  .detail-content h2 {
+    font-size: 30px !important;
+  }
+
+  .detail-desc {
+    max-width: none;
+    font-size: 15px;
+    line-height: 1.82;
+  }
+
+  .detail-grid {
+    gap: 14px !important;
+  }
+
+  .detail-panel {
+    min-height: 0;
+    padding: 18px !important;
+  }
+
+  .modal-close {
+    top: 14px;
+    right: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .detail-modal {
+    width: calc(100vw - 16px) !important;
+    max-height: calc(100vh - 16px);
+    padding: 58px 16px 18px !important;
+    border-radius: 24px;
+  }
+
+  .detail-layout {
+    gap: 22px !important;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .detail-panel-rich {
+    grid-column: auto;
+  }
+
+  .detail-content h2 {
+    font-size: 24px !important;
+    line-height: 1.22;
+  }
+
+  .detail-desc {
+    font-size: 14px !important;
+    line-height: 1.78;
+  }
+
+  .detail-actions {
+    gap: 10px !important;
+    padding-top: 8px;
+  }
+
+  .mini-modal-header {
+    padding-right: 68px;
+  }
+}
