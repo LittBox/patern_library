@@ -33,6 +33,7 @@
       <nav class="nav" aria-label="主导航">
         <ul>
           <li data-target="home">首页</li>
+          <li data-target="report">资讯报道</li>
           <li data-target="gallery">剪纸纹样库</li>
           <li data-target="market">商品展览</li>
           <li data-target="creator">创作者中心</li>
@@ -52,6 +53,7 @@
     </div>
     <nav class="nav-drawer-nav" aria-label="移动端导航">
       <button type="button" data-target="home">首页</button>
+      <button type="button" data-target="report">资讯报道</button>
       <button type="button" data-target="gallery">剪纸纹样库</button>
       <button type="button" data-target="market">商品展览</button>
       <button type="button" data-target="creator">创作者中心</button>
@@ -111,10 +113,57 @@
       <div class="home-featured">
         <div class="featured-header">
           <h3>热门剪纸纹样推荐</h3>
-          <a href="#" class="featured-more">查看全部 →</a>
+          <a href="#" class="featured-more" id="featuredGalleryMore">查看全部 →</a>
         </div>
         <div class="featured-grid" id="featuredPatterns">
           <!-- 动态加载热门纹案 -->
+        </div>
+      </div>
+
+      <div class="home-reports">
+        <div class="featured-header">
+          <h3>项目社会报道</h3>
+          <a href="#" class="featured-more" id="reportMoreLink">查看资讯 →</a>
+        </div>
+        <div class="home-report-layout">
+          <div id="homeReportSpotlight">
+            <!-- 动态加载重点报道 -->
+          </div>
+          <div class="home-report-list" id="homeReports">
+            <!-- 动态加载资讯预览 -->
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="report" class="page report-page hidden">
+      <div class="page-container">
+        <div class="page-header report-page-header">
+          <h1>资讯报道</h1>
+          <p class="page-subtitle">收录项目相关的社会传播与媒体报道，分为原创与转载两类，点击详情可跳转至对应平台查看原文或视频。</p>
+        </div>
+
+        <div class="report-feature-wrap" id="reportFeature">
+          <!-- 动态加载重点报道 -->
+        </div>
+
+        <div class="report-section">
+          <div class="report-section-head">
+            <h2>原创</h2>
+            <span id="originalReportCount">0 篇</span>
+          </div>
+          <div class="report-grid" id="originalReports">
+            <!-- 动态加载原创资讯 -->
+          </div>
+        </div>
+
+        <div class="report-section">
+          <div class="report-section-head">
+            <h2>转载</h2>
+            <span id="syndicatedReportCount">0 篇</span>
+          </div>
+          <div class="report-grid" id="syndicatedReports">
+            <!-- 动态加载转载资讯 -->
+          </div>
         </div>
       </div>
     </section>

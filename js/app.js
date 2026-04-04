@@ -123,6 +123,33 @@ let currentCarouselIndex = 0
 let carouselTimer = null
 let activePatternId = null
 let activeCreatorId = null
+let reportArticles = []
+
+const REPORT_HOME_IMAGE_PATHS = [
+  'report/首页用图/央视网用图.png',
+  'report/首页用图/云南大学易班发展中心“‘易’心共庆，剪绎同心”国庆剪纸活动圆满落幕！首页用图.jpeg',
+  'report/首页用图/“易”心共庆，剪绎同心.jpg',
+  'report/首页用图/云大校史馆开展“2025年云南省社会科学普及宣传周”系列活动.png'
+]
+
+const REPORT_IMAGE_RULES = [
+  {
+    pattern: /央视网|非遗微课|云上.*青春.*学艺人.*非遗剪纸|学艺人.*非遗剪纸/u,
+    path: REPORT_HOME_IMAGE_PATHS[0]
+  },
+  {
+    pattern: /圆满落幕|易班发展中心.*国庆剪纸活动/u,
+    path: REPORT_HOME_IMAGE_PATHS[1]
+  },
+  {
+    pattern: /“易”心共庆，剪绎同心|国庆剪纸活动/u,
+    path: REPORT_HOME_IMAGE_PATHS[2]
+  },
+  {
+    pattern: /校史馆开展|社会科学普及宣传周/u,
+    path: REPORT_HOME_IMAGE_PATHS[3]
+  }
+]
 
 const AI_LOADING_STEPS = {
   meta: {
@@ -176,18 +203,23 @@ function renderCulturalLoaderMarkup(label = '纹样载入中') {
 
 function renderDeferredImageMarkup({
   src = '',
+  srcCandidates = [],
   alt = '',
   className = '',
   shellClass = '',
   loadingLabel = '纹样载入中'
 } = {}) {
   const shellClasses = ['cultural-image-shell', shellClass].filter(Boolean).join(' ')
+  const candidatesAttr = srcCandidates.length
+    ? ` data-deferred-candidates="${escapeHtml(JSON.stringify(srcCandidates))}"`
+    : ''
 
   return `
     <div class="${shellClasses}">
       <img
         src="${EMPTY_IMAGE_SRC}"
         data-deferred-src="${escapeHtml(src || '')}"
+        ${candidatesAttr}
         data-loading-label="${escapeHtml(loadingLabel)}"
         alt="${escapeHtml(alt)}"
         class="${className}"
@@ -221,6 +253,7 @@ function setDeferredImage(
   image,
   targetSrc,
   {
+    srcCandidates = [],
     alt = '',
     shellClass = '',
     loadingLabel = '纹样载入中',
@@ -230,10 +263,21 @@ function setDeferredImage(
   if (!image) return Promise.resolve(false)
 
   const shell = ensureCulturalImageShell(image, { shellClass, loadingLabel })
-  const resolvedSrc = targetSrc || image.dataset.deferredSrc || ''
+  const resolvedSrc = typeof targetSrc === 'string' ? (targetSrc || image.dataset.deferredSrc || '') : (image.dataset.deferredSrc || '')
+  let datasetCandidates = []
+  try {
+    datasetCandidates = JSON.parse(image.dataset.deferredCandidates || '[]')
+  } catch {
+    datasetCandidates = []
+  }
+  const resolvedCandidates = [...srcCandidates, ...datasetCandidates, resolvedSrc]
+    .map((item) => String(item || '').trim())
+    .filter(Boolean)
+    .filter((item, index, list) => list.indexOf(item) === index)
   const safeFallbackText = fallbackText || alt || '非遗剪纸纹样'
 
   image.dataset.deferredSrc = resolvedSrc
+  image.dataset.deferredCandidates = JSON.stringify(resolvedCandidates)
   image.dataset.loadingLabel = loadingLabel
   if (alt) {
     image.alt = alt
@@ -243,7 +287,7 @@ function setDeferredImage(
   shell?.classList.remove('is-loaded', 'is-error')
   image.classList.remove('is-ready')
 
-  if (!resolvedSrc) {
+  if (!resolvedCandidates.length) {
     image.src = PLACEHOLDER_SVG(720, 720, safeFallbackText)
     image.classList.add('is-ready')
     shell?.classList.remove('is-loading')
@@ -255,16 +299,13 @@ function setDeferredImage(
   image.dataset.loadToken = token
 
   return new Promise((resolve) => {
-    const preloader = new Image()
-    preloader.decoding = 'async'
-
-    const finalize = (didLoad) => {
+    const finalize = (didLoad, loadedSrc = '') => {
       if (image.dataset.loadToken !== token) {
         resolve(false)
         return
       }
 
-      image.src = didLoad ? resolvedSrc : PLACEHOLDER_SVG(720, 720, safeFallbackText)
+      image.src = didLoad ? loadedSrc : PLACEHOLDER_SVG(720, 720, safeFallbackText)
       image.classList.add('is-ready')
       shell?.classList.remove('is-loading')
       shell?.classList.add('is-loaded')
@@ -272,13 +313,29 @@ function setDeferredImage(
       resolve(didLoad)
     }
 
-    preloader.onload = () => finalize(true)
-    preloader.onerror = () => finalize(false)
-    preloader.src = resolvedSrc
+    const tryLoadAt = (index) => {
+      if (index >= resolvedCandidates.length) {
+        finalize(false)
+        return
+      }
 
-    if (preloader.complete) {
-      finalize(preloader.naturalWidth > 0)
+      const candidateSrc = resolvedCandidates[index]
+      const preloader = new Image()
+      preloader.decoding = 'async'
+      preloader.onload = () => finalize(true, candidateSrc)
+      preloader.onerror = () => tryLoadAt(index + 1)
+      preloader.src = candidateSrc
+
+      if (preloader.complete) {
+        if (preloader.naturalWidth > 0) {
+          finalize(true, candidateSrc)
+        } else {
+          tryLoadAt(index + 1)
+        }
+      }
     }
+
+    tryLoadAt(0)
   })
 }
 
@@ -288,7 +345,15 @@ function hydrateDeferredImages(root = document) {
     : [...(root?.querySelectorAll?.('img[data-deferred-src]') || [])]
 
   images.forEach((image) => {
+    let srcCandidates = []
+    try {
+      srcCandidates = JSON.parse(image.dataset.deferredCandidates || '[]')
+    } catch {
+      srcCandidates = []
+    }
+
     setDeferredImage(image, image.dataset.deferredSrc, {
+      srcCandidates,
       alt: image.alt,
       loadingLabel: image.dataset.loadingLabel || '纹样载入中',
       fallbackText: image.alt || '非遗剪纸纹样'
@@ -443,6 +508,217 @@ function normalizeAssetUrl(url) {
   if (!url) return ''
   if (/^https?:\/\//.test(url) || url.startsWith('/')) return url
   return `/${String(url).replace(/^\.\//, '').replace(/^\/+/, '')}`
+}
+
+function parseCsvRows(text) {
+  const rows = []
+  let current = ''
+  let row = []
+  let inQuotes = false
+  const source = String(text || '').replace(/^\uFEFF/, '')
+
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index]
+    const next = source[index + 1]
+
+    if (char === '"') {
+      if (inQuotes && next === '"') {
+        current += '"'
+        index += 1
+      } else {
+        inQuotes = !inQuotes
+      }
+      continue
+    }
+
+    if (char === ',' && !inQuotes) {
+      row.push(current)
+      current = ''
+      continue
+    }
+
+    if ((char === '\n' || char === '\r') && !inQuotes) {
+      if (char === '\r' && next === '\n') index += 1
+      row.push(current)
+      if (row.some((cell) => String(cell).trim())) {
+        rows.push(row)
+      }
+      row = []
+      current = ''
+      continue
+    }
+
+    current += char
+  }
+
+  row.push(current)
+  if (row.some((cell) => String(cell).trim())) {
+    rows.push(row)
+  }
+
+  if (!rows.length) return []
+  const headers = rows[0].map((header) => String(header || '').trim())
+
+  return rows.slice(1).map((values) => {
+    const record = {}
+    headers.forEach((header, index) => {
+      record[header] = String(values[index] ?? '').replace(/\u00A0/g, ' ').trim()
+    })
+    return record
+  })
+}
+
+function parseReportDate(input) {
+  const value = String(input || '').replace(/\u00A0/g, ' ').trim()
+  const match = value.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/)
+  if (!match) return null
+
+  const [, year, month, day, hour = '0', minute = '0', second = '0'] = match
+  const parsed = new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    Number(hour),
+    Number(minute),
+    Number(second)
+  )
+
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+function getReportCategory(record) {
+  return /转载/.test(String(record['简介'] || '')) ? '转载' : '原创'
+}
+
+function buildReportSummary(record) {
+  const summary = String(record['简介'] || '').trim()
+  if (summary && summary !== '转载') return summary
+
+  const platform = String(record['平台'] || '相关平台').trim()
+  const mediaType = String(record['种类(图文/视频)'] || '图文').trim()
+  const author = String(record['作者'] || '').trim()
+
+  return author
+    ? `${platform}发布的${mediaType}内容，记录了${author}与项目相关的传播动态。`
+    : `${platform}发布的${mediaType}内容，记录了项目相关的社会传播与关注情况。`
+}
+
+function resolveReportImage(article, fallbackIndex = 0) {
+  const matchSource = `${article.title || ''} ${article.summary || ''}`
+  const matched = REPORT_IMAGE_RULES.find((rule) => rule.pattern.test(matchSource))
+  const fallbackPath = REPORT_HOME_IMAGE_PATHS[fallbackIndex % REPORT_HOME_IMAGE_PATHS.length] || REPORT_HOME_IMAGE_PATHS[0]
+  return encodeURI(normalizeAssetUrl(matched?.path || fallbackPath))
+}
+
+function buildReportImageCandidates(article, fallbackIndex = 0) {
+  const fileBases = [
+    article.title,
+    article.platform.includes('央视网') ? '央视网用图' : ''
+  ].map((item) => String(item || '').trim()).filter(Boolean)
+
+  const directories = ['/report/首页用图', '/report']
+  const extensions = ['png', 'jpg', 'jpeg', 'webp']
+  const candidates = []
+
+  fileBases.forEach((baseName) => {
+    directories.forEach((directory) => {
+      extensions.forEach((extension) => {
+        candidates.push(encodeURI(`${directory}/${baseName}.${extension}`))
+      })
+    })
+  })
+
+  candidates.push(resolveReportImage(article, fallbackIndex))
+
+  return candidates.filter((item, index, list) => list.indexOf(item) === index)
+}
+
+function getReportPriority(article) {
+  let score = 0
+  if (article.platform.includes('央视网')) score += 1000
+  if (article.platform.includes('全国高校思想政治教育网')) score += 300
+  if (article.category === '原创') score += 60
+  if (article.platform.includes('公众号')) score += 20
+  return score
+}
+
+function sortReportEntries(entries) {
+  return [...entries].sort((left, right) =>
+    (right.priorityScore - left.priorityScore) ||
+    (right.timestamp - left.timestamp) ||
+    right.title.localeCompare(left.title, 'zh-CN')
+  )
+}
+
+function getPinnedReport() {
+  return sortReportEntries(reportArticles).find((article) => article.platform.includes('央视网')) || sortReportEntries(reportArticles)[0] || null
+}
+
+function selectHomeReportList(entries, pinned) {
+  const pool = sortReportEntries(entries.filter((article) => article.id !== pinned?.id))
+  const selected = []
+  const selectedIds = new Set()
+
+  const pickFirst = (matcher) => {
+    const matched = pool.find((article) => !selectedIds.has(article.id) && matcher(article))
+    if (!matched) return
+    selected.push(matched)
+    selectedIds.add(matched.id)
+  }
+
+  pickFirst((article) =>
+    /国庆剪纸活动|剪纸活动|活动圆满落幕|活动落幕/u.test(article.title) ||
+    /活动落幕|圆满完成推文/u.test(article.summary)
+  )
+
+  pickFirst((article) => /校史馆|社会科学普及宣传周/u.test(article.title))
+
+  pickFirst((article) =>
+    /报名推文/u.test(article.summary) ||
+    /^“易”心共庆，剪绎同心$/u.test(article.title)
+  )
+
+  for (const article of pool) {
+    if (selected.length >= 3) break
+    if (selectedIds.has(article.id)) continue
+    selected.push(article)
+    selectedIds.add(article.id)
+  }
+
+  return selected
+}
+
+function buildReportEntry(record, index) {
+  const publishedAt = parseReportDate(record['发布时间'])
+  const category = getReportCategory(record)
+  const title = String(record['标题'] || `资讯 ${index + 1}`).trim()
+  const platform = String(record['平台'] || '相关平台').trim() || '相关平台'
+  const mediaType = String(record['种类(图文/视频)'] || '图文').trim() || '图文'
+  const author = String(record['作者'] || '').trim() || platform
+  const externalUrl = /^https?:\/\//.test(String(record['链接'] || '').trim()) ? String(record['链接']).trim() : '#'
+  const article = {
+    id: `report_${index + 1}`,
+    title,
+    category,
+    platform,
+    author,
+    mediaType,
+    externalUrl,
+    summary: buildReportSummary(record),
+    rawDate: String(record['发布时间'] || '').trim(),
+    publishedAt: publishedAt?.toISOString() || '',
+    timestamp: publishedAt?.getTime() || 0
+  }
+
+  article.priorityScore = getReportPriority(article)
+  article.imageUrl = resolveReportImage(article, index)
+  article.imageCandidates = buildReportImageCandidates(article, index)
+  article.isPinned = article.platform.includes('央视网')
+  return article
+}
+
+function getReportDateLabel(article) {
+  return article.publishedAt ? formatDate(article.publishedAt) : (article.rawDate || '暂无时间')
 }
 
 function getActionIcon(action) {
@@ -752,6 +1028,14 @@ async function fetchLocalJson(path) {
   return response.json()
 }
 
+async function fetchLocalText(path) {
+  const response = await fetch(path)
+  if (!response.ok) {
+    throw new Error(`无法读取 ${path}`)
+  }
+  return response.text()
+}
+
 async function bootstrapLocalAssets() {
   try {
     const [carouselData, patternData, goodsData] = await Promise.all([
@@ -813,6 +1097,19 @@ async function bootstrapLocalAssets() {
   }
 }
 
+async function bootstrapLocalReports() {
+  try {
+    const csvText = await fetchLocalText('/report/report.csv')
+    const rows = parseCsvRows(csvText)
+    reportArticles = rows
+      .map(buildReportEntry)
+      .filter((article) => article.title && article.externalUrl !== '#')
+  } catch (error) {
+    reportArticles = []
+    console.warn('本地资讯数据读取失败，继续使用空资讯列表。', error)
+  }
+}
+
 function getPatternById(patternId) {
   return state.patterns.find((pattern) => pattern.id === patternId) || null
 }
@@ -849,6 +1146,156 @@ function renderFeaturedPatterns() {
   `).join('')
 
   hydrateDeferredImages(container)
+}
+
+function renderHomeReportSpotlight(article) {
+  return `
+    <article class="report-feature-card report-feature-card-home ${article.isPinned ? 'is-cctv' : ''}">
+      <div class="report-feature-visual">
+        ${renderDeferredImageMarkup({
+          src: article.imageUrl,
+          srcCandidates: article.imageCandidates,
+          alt: article.title,
+          className: 'report-feature-image',
+          shellClass: 'report-feature-image-shell',
+          loadingLabel: '重点报道载入中'
+        })}
+      </div>
+      <div class="report-feature-content">
+        <p class="eyebrow">${article.isPinned ? '重点报道 · 央视网' : `重点报道 · ${escapeHtml(article.platform)}`}</p>
+        <h3>${escapeHtml(article.title)}</h3>
+        <div class="report-meta-row">
+          <span>${escapeHtml(article.category)}</span>
+          <span>${escapeHtml(article.mediaType)}</span>
+          <span>${escapeHtml(getReportDateLabel(article))}</span>
+        </div>
+        <a class="report-detail-link" href="${escapeHtml(article.externalUrl)}" target="_blank" rel="noreferrer noopener">
+          <span>详情</span>
+          <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </article>
+  `
+}
+
+function renderHomeReportCard(article) {
+  return `
+    <article class="home-report-card">
+      <div class="home-report-card-visual">
+        ${renderDeferredImageMarkup({
+          src: article.imageUrl,
+          srcCandidates: article.imageCandidates,
+          alt: article.title,
+          className: 'home-report-card-image',
+          shellClass: 'home-report-image-shell',
+          loadingLabel: '资讯图片载入中'
+        })}
+      </div>
+      <div class="home-report-card-content">
+        <div class="report-card-top">
+          <span class="pill">${escapeHtml(article.category)}</span>
+          <span class="report-card-date">${escapeHtml(getReportDateLabel(article))}</span>
+        </div>
+        <h4>${escapeHtml(article.title)}</h4>
+        <div class="report-card-meta">
+          <span>${escapeHtml(article.platform)}</span>
+          <span>${escapeHtml(article.mediaType)}</span>
+        </div>
+        <a class="report-detail-link" href="${escapeHtml(article.externalUrl)}" target="_blank" rel="noreferrer noopener">
+          <span>详情</span>
+          <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </article>
+  `
+}
+
+function renderHomeReports() {
+  const spotlight = document.getElementById('homeReportSpotlight')
+  const list = document.getElementById('homeReports')
+  if (!spotlight || !list) return
+
+  const pinned = getPinnedReport()
+  const rest = selectHomeReportList(reportArticles, pinned)
+
+  spotlight.innerHTML = pinned
+    ? renderHomeReportSpotlight(pinned)
+    : '<div class="empty-state"><p>资讯报道整理中，稍后会在这里展示最新传播动态。</p></div>'
+
+  list.innerHTML = rest.length
+    ? rest.map(renderHomeReportCard).join('')
+    : '<div class="empty-state small"><p>暂时还没有更多资讯条目。</p></div>'
+
+  hydrateDeferredImages(spotlight)
+  hydrateDeferredImages(list)
+}
+
+function renderReportCard(article) {
+  return `
+    <article class="report-card ${article.platform.includes('央视网') ? 'is-cctv' : ''}">
+      <div class="report-card-top">
+        <span class="pill">${escapeHtml(article.platform)}</span>
+        <span class="report-card-date">${escapeHtml(getReportDateLabel(article))}</span>
+      </div>
+      <div class="report-card-visual">
+        ${renderDeferredImageMarkup({
+          src: article.imageUrl,
+          srcCandidates: article.imageCandidates,
+          alt: article.title,
+          className: 'report-card-image',
+          shellClass: 'report-card-image-shell',
+          loadingLabel: '资讯配图载入中'
+        })}
+      </div>
+      <h3 class="report-card-title">${escapeHtml(article.title)}</h3>
+      <div class="report-card-bottom">
+        <div class="report-card-meta">
+          <span>${escapeHtml(article.category)}</span>
+          <span>${escapeHtml(article.mediaType)}</span>
+          <span>${escapeHtml(article.author)}</span>
+        </div>
+        <a class="report-detail-link" href="${escapeHtml(article.externalUrl)}" target="_blank" rel="noreferrer noopener">
+          <span>详情</span>
+          <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </article>
+  `
+}
+
+function renderReportsPage() {
+  const featureContainer = document.getElementById('reportFeature')
+  const originalContainer = document.getElementById('originalReports')
+  const syndicatedContainer = document.getElementById('syndicatedReports')
+  const originalCount = document.getElementById('originalReportCount')
+  const syndicatedCount = document.getElementById('syndicatedReportCount')
+  if (!featureContainer || !originalContainer || !syndicatedContainer || !originalCount || !syndicatedCount) return
+
+  const pinned = getPinnedReport()
+  const originalReports = sortReportEntries(reportArticles.filter((article) => article.category === '原创'))
+  const syndicatedReports = sortReportEntries(reportArticles.filter((article) => article.category === '转载' && article.id !== pinned?.id))
+  const syndicatedTotal = syndicatedReports.length + (pinned?.category === '转载' ? 1 : 0)
+
+  originalCount.textContent = `${originalReports.length} 篇`
+  syndicatedCount.textContent = pinned?.category === '转载'
+    ? `${syndicatedTotal} 篇（含重点报道）`
+    : `${syndicatedReports.length} 篇`
+
+  featureContainer.innerHTML = pinned
+    ? renderHomeReportSpotlight(pinned)
+    : '<div class="empty-state"><p>重点报道整理中，稍后会在这里展示。</p></div>'
+
+  originalContainer.innerHTML = originalReports.length
+    ? originalReports.map(renderReportCard).join('')
+    : '<div class="empty-state small"><p>原创报道整理中。</p></div>'
+
+  syndicatedContainer.innerHTML = syndicatedReports.length
+    ? syndicatedReports.map(renderReportCard).join('')
+    : '<div class="empty-state small"><p>转载报道整理中。</p></div>'
+
+  hydrateDeferredImages(featureContainer)
+  hydrateDeferredImages(originalContainer)
+  hydrateDeferredImages(syndicatedContainer)
 }
 
 function renderPatterns() {
@@ -1178,6 +1625,8 @@ async function removePattern(patternId) {
 
 function rerender() {
   renderFeaturedPatterns()
+  renderHomeReports()
+  renderReportsPage()
   renderPatterns()
   renderProducts()
   renderCreatorOverview()
@@ -1531,9 +1980,15 @@ function bindNavigation() {
   navDrawerClose?.addEventListener('click', closeMobileNav)
   navDrawerBackdrop?.addEventListener('click', closeMobileNav)
 
-  document.querySelector('.featured-more')?.addEventListener('click', (event) => {
+  document.getElementById('featuredGalleryMore')?.addEventListener('click', (event) => {
     event.preventDefault()
     showPage('gallery')
+    closeMobileNav()
+  })
+
+  document.getElementById('reportMoreLink')?.addEventListener('click', (event) => {
+    event.preventDefault()
+    showPage('report')
     closeMobileNav()
   })
 }
@@ -1688,6 +2143,7 @@ async function init() {
   await hydrateLocalPatternImages()
   await bootstrapFromServer()
   await bootstrapLocalAssets()
+  await bootstrapLocalReports()
 
   bindNavigation()
   bindCarousel()
