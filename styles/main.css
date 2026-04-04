@@ -4379,14 +4379,149 @@ header::before {
   box-shadow: none !important;
 }
 
-.ai-loading-ring {
-  width: 48px;
-  height: 48px;
+.ai-cut-scene {
+  --paper-width: 184px;
+  --paper-height: 92px;
+  --paper-fill: rgba(252, 245, 226, 0.92);
+  --paper-line: rgba(177, 35, 28, 0.18);
+  position: relative;
+  width: 280px;
+  height: 152px;
+  flex: 0 0 280px;
+  margin: 0;
+  border-radius: 24px;
+  background: rgba(177, 35, 28, 0.04);
+  overflow: hidden;
+}
+
+.ai-paper {
+  position: absolute;
+  left: 14px;
+  top: 30px;
+  width: var(--paper-width);
+  height: var(--paper-height);
+}
+
+.ai-paper-main,
+.ai-paper-offcut {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border: 1px solid var(--paper-line);
+  border-radius: 18px;
+  background: var(--paper-fill);
+}
+
+.ai-paper-main {
+  left: 0;
+  width: 100%;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  animation: ai-paper-cut-main 2.8s infinite cubic-bezier(0.65, 0.04, 0.28, 0.98);
+  will-change: clip-path;
+}
+
+.ai-paper-main::before {
+  content: "";
+  position: absolute;
+  inset: 10px 16px;
+  border-radius: 12px;
+  border: 1px dashed rgba(177, 35, 28, 0.16);
+  opacity: 0.5;
+}
+
+.ai-paper-offcut {
+  right: 0;
+  width: 40%;
+  border-left: none;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  opacity: 0;
+  transform-origin: 8% 50%;
+  animation: ai-paper-offcut 2.8s infinite cubic-bezier(0.65, 0.04, 0.28, 0.98);
+  will-change: transform, opacity;
+}
+
+.ai-paper-offcut::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  right: 18px;
+  top: 32px;
   border-radius: 50%;
-  border: 3px solid rgba(177, 35, 28, 0.18);
-  border-top-color: #b1231c;
-  flex: 0 0 48px;
-  animation: ai-spin 0.9s linear infinite;
+  background: rgba(177, 35, 28, 0.18);
+  box-shadow:
+    -12px 18px 0 rgba(177, 35, 28, 0.12),
+    -22px 40px 0 rgba(177, 35, 28, 0.1);
+  opacity: 0;
+  animation: ai-paper-confetti 2.8s infinite linear;
+}
+
+.ai-scissors {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  width: 118px;
+  height: 118px;
+  transform: translateY(-50%);
+  animation: ai-scissor-shift 2.8s infinite cubic-bezier(0.65, 0.04, 0.28, 0.98);
+  will-change: transform;
+}
+
+.ai-scissor-arm {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 118px;
+  height: 28px;
+  transform-origin: 22px 14px;
+  will-change: transform;
+}
+
+.ai-scissor-arm::before {
+  content: "";
+  position: absolute;
+  left: 18px;
+  top: 7px;
+  width: 72px;
+  height: 14px;
+  border-radius: 999px;
+  background: #d6c7b7;
+  border: 1px solid rgba(109, 74, 47, 0.22);
+  clip-path: polygon(0 50%, 88% 0, 100% 50%, 88% 100%);
+}
+
+.ai-scissor-arm::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 4px solid #b1231c;
+  background: rgba(252, 245, 226, 0.96);
+  box-sizing: border-box;
+}
+
+.ai-scissor-arm-top {
+  animation: ai-scissor-top 2.8s infinite cubic-bezier(0.65, 0.04, 0.28, 0.98);
+}
+
+.ai-scissor-arm-bottom {
+  animation: ai-scissor-bottom 2.8s infinite cubic-bezier(0.65, 0.04, 0.28, 0.98);
+}
+
+.ai-scissor-pivot {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #b1231c;
+  border: 2px solid #fcf5e2;
+  transform: translateY(-50%);
+  box-shadow: 0 0 0 3px rgba(177, 35, 28, 0.14);
 }
 
 .ai-loading-copy {
@@ -4545,16 +4680,165 @@ header::before {
   }
 }
 
+@keyframes ai-scissor-top {
+  0%,
+  18% {
+    transform: translateY(-50%) rotate(22deg);
+  }
+
+  40% {
+    transform: translateY(-50%) rotate(18deg);
+  }
+
+  50%,
+  58% {
+    transform: translateY(-50%) rotate(4deg);
+  }
+
+  74% {
+    transform: translateY(-50%) rotate(12deg);
+  }
+
+  100% {
+    transform: translateY(-50%) rotate(22deg);
+  }
+}
+
+@keyframes ai-scissor-bottom {
+  0%,
+  18% {
+    transform: translateY(-50%) rotate(-22deg);
+  }
+
+  40% {
+    transform: translateY(-50%) rotate(-18deg);
+  }
+
+  50%,
+  58% {
+    transform: translateY(-50%) rotate(-4deg);
+  }
+
+  74% {
+    transform: translateY(-50%) rotate(-12deg);
+  }
+
+  100% {
+    transform: translateY(-50%) rotate(-22deg);
+  }
+}
+
+@keyframes ai-scissor-shift {
+  0%,
+  22% {
+    transform: translateY(-50%) translateX(0);
+  }
+
+  44%,
+  58% {
+    transform: translateY(-50%) translateX(-10px);
+  }
+
+  100% {
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+@keyframes ai-paper-cut-main {
+  0%,
+  36% {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+
+  50%,
+  74% {
+    clip-path: polygon(0 0, 67% 0, 80% 50%, 67% 100%, 0 100%);
+  }
+
+  100% {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+}
+
+@keyframes ai-paper-offcut {
+  0%,
+  44% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(0deg);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg);
+  }
+
+  70% {
+    opacity: 0.9;
+    transform: translate(16px, 18px) rotate(14deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(28px, 38px) rotate(22deg);
+  }
+}
+
+@keyframes ai-paper-confetti {
+  0%,
+  48% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+
+  54%,
+  68% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(18px, 18px);
+  }
+}
+
+@supports not (clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%)) {
+  .ai-paper-main,
+  .ai-paper-offcut {
+    clip-path: none;
+  }
+
+  .ai-paper-offcut {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-paper-main,
+  .ai-paper-offcut,
+  .ai-paper-offcut::after,
+  .ai-scissors,
+  .ai-scissor-arm {
+    animation: none !important;
+  }
+
+  .ai-cut-scene {
+    background: rgba(177, 35, 28, 0.03);
+  }
+}
+
 @media (max-width: 768px) {
   .ai-loading-visual {
     padding: 16px;
     gap: 14px;
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .ai-loading-ring {
-    width: 42px;
-    height: 42px;
-    flex-basis: 42px;
+  .ai-cut-scene {
+    width: 100%;
+    height: 144px;
+    flex-basis: auto;
   }
 
   .ai-loading-copy h3 {

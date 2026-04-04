@@ -199,7 +199,17 @@ function renderAiLoadingState({ visibleSteps = ['meta'], activeStep = 'meta', co
   aiResult.innerHTML = `
     <section class="ai-loading-card" aria-live="polite">
       <div class="ai-loading-visual">
-        <span class="ai-loading-ring" aria-hidden="true"></span>
+        <figure class="ai-cut-scene" aria-hidden="true">
+          <div class="ai-paper">
+            <span class="ai-paper-main"></span>
+            <span class="ai-paper-offcut"></span>
+          </div>
+          <div class="ai-scissors">
+            <span class="ai-scissor-arm ai-scissor-arm-top"></span>
+            <span class="ai-scissor-arm ai-scissor-arm-bottom"></span>
+            <span class="ai-scissor-pivot"></span>
+          </div>
+        </figure>
         <div class="ai-loading-copy">
           <p class="eyebrow">AI 生成中</p>
           <h3>正在生成剪纸纹案</h3>
