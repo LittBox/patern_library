@@ -1731,11 +1731,22 @@ function createPatternDetailModal(pattern) {
 async function handleUpload(file) {
   const base64 = await toBase64(file)
   const payload = parseDataUrl(base64)
-  const uploaded = await api.uploadPatternImage({
-    fileName: file.name,
-    contentType: payload.mimeType,
-    base64: payload.base64
-  })
+  let uploaded
+  try {
+    uploaded = await api.uploadPatternImage({
+      fileName: file.name,
+      contentType: payload.mimeType,
+      base64: payload.base64
+    })
+  } catch (error) {
+    uploaded = {
+      imageUrl: base64,
+      imageBlobKey: '',
+      fallback: true,
+      model: 'local-fallback',
+      message: error.message || '上传接口不可用，已切换为本地模式。'
+    }
+  }
 
   const imageStorageKey = uploaded.fallback
     ? await saveLocalImage(uploaded.imageUrl || base64).catch(() => '')

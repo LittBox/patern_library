@@ -17,8 +17,8 @@ const ROOT = path.resolve(process.cwd())
 const PORT = Number(process.env.PORT || 8888)
 
 app.use(cors())
-app.use(express.json({ limit: '25mb' }))
-app.use(express.urlencoded({ extended: true, limit: '25mb' }))
+app.use(express.json({ limit: '50mb' }))
+app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 
 app.use('/uploads', express.static(getUploadDir()))
 app.use(express.static(ROOT))
