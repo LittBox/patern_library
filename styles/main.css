@@ -5922,6 +5922,11 @@ header::before {
   z-index: 2;
 }
 
+.mini-modal-window > .mini-modal-close {
+  position: absolute;
+  z-index: 3;
+}
+
 .cultural-loader-stage > .cultural-loader-clouds,
 .cultural-loader-stage > .cultural-loader-lines {
   position: absolute !important;
