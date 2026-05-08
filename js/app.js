@@ -2121,6 +2121,221 @@ function bindAi() {
   document.getElementById('generateBtn')?.addEventListener('click', handleGenerate)
 }
 
+let paperStyleData = [];
+
+async function initPaperStylePage() {
+  const res = await fetch('./data/papercutting_56.json');
+  paperStyleData = await res.json();
+
+  initPaperStyleFilters();
+  renderPaperStyles(paperStyleData);
+
+  document.getElementById('paperStyleSearchBtn').addEventListener('click', searchPaperStyles);
+  document.getElementById('paperStyleResetBtn').addEventListener('click', resetPaperStyles);
+}
+
+function initPaperStyleFilters() {
+  const regionSelect = document.getElementById('paperStyleRegion');
+  const batchSelect = document.getElementById('paperStyleBatch');
+
+  const regions = [...new Set(paperStyleData.map(item => item.region).filter(Boolean))];
+  const batches = [...new Set(paperStyleData.map(item => item.batch).filter(Boolean))];
+
+  regionSelect.innerHTML = '<option value="">全部地区</option>' +
+    regions.map(region => `<option value="${region}">${region}</option>`).join('');
+
+  batchSelect.innerHTML = '<option value="">全部批次</option>' +
+    batches.map(batch => `<option value="${batch}">${batch}</option>`).join('');
+}
+
+function searchPaperStyles() {
+  const keyword = document.getElementById('paperStyleKeyword').value.trim();
+  const region = document.getElementById('paperStyleRegion').value;
+  const batch = document.getElementById('paperStyleBatch').value;
+
+  const result = paperStyleData.filter(item => {
+    const text = [
+      item.name,
+      item.code,
+      item.category,
+      item.region,
+      item.batch,
+      item.type,
+      item.unit,
+      item.intro
+    ].join('');
+
+    const matchKeyword = !keyword || text.includes(keyword);
+    const matchRegion = !region || item.region === region;
+    const matchBatch = !batch || item.batch === batch;
+
+    return matchKeyword && matchRegion && matchBatch;
+  });
+
+  renderPaperStyles(result);
+}
+
+function resetPaperStyles() {
+  document.getElementById('paperStyleKeyword').value = '';
+  document.getElementById('paperStyleRegion').value = '';
+  document.getElementById('paperStyleBatch').value = '';
+
+  renderPaperStyles(paperStyleData);
+}
+
+function openPaperStyleDetail(item) {
+  removeMiniModal();
+
+  openMiniModal({
+    title: item.name,
+    subtitle: `${item.region} · ${item.batch}`,
+    content: `
+      <div class="paper-style-detail">
+
+        <div class="paper-style-detail-meta">
+          <span>${item.code || '无编号'}</span>
+          <span>${item.category || '传统美术'}</span>
+          <span>${item.type || '类型不详'}</span>
+        </div>
+
+        <div class="paper-style-detail-intro">
+          ${item.intro || '暂无简介'}
+        </div>
+
+        <div class="paper-style-detail-unit">
+          <strong>保护单位：</strong>
+          ${item.unit || '暂无'}
+        </div>
+
+        <div class="paper-style-detail-link">
+          <a href="${item.sourceUrl}" target="_blank">
+            查看中国非遗网原文 →
+          </a>
+        </div>
+
+      </div>
+    `,
+    actions: `
+      <button class="btn-primary" data-mini-action="ok">
+        关闭
+      </button>
+    `
+  });
+
+  document
+    .querySelector('[data-mini-action="ok"]')
+    ?.addEventListener('click', removeMiniModal);
+}
+
+function renderPaperStyles(list) {
+  const container = document.getElementById('paperStyleList');
+  const count = document.getElementById('paperStyleCount');
+
+  count.textContent = `${list.length} 条`;
+
+  container.innerHTML = list.map((item, index) => `
+    <tr>
+      <td>${index + 1}</td>
+
+      <td>
+        ${item.projectNo || '-'}
+      </td>
+
+      <td>
+        ${item.code || '-'}
+      </td>
+
+      <td class="paper-style-name">
+        ${item.name}
+      </td>
+
+      <td>
+        ${item.category || '-'}
+      </td>
+
+      <td>
+        ${item.batch || '-'}
+      </td>
+
+      <td>
+        ${item.type || '-'}
+      </td>
+
+      <td>
+        ${item.region || '-'}
+      </td>
+
+      <td>
+        ${item.unit || '-'}
+      </td>
+
+      <td>
+        <button
+          class="paper-style-detail-btn"
+          data-style-id="${item.sourceUrl}"
+        >
+          详情→
+        </button>
+      </td>
+    </tr>
+  `).join('');
+
+  document
+    .querySelectorAll('.paper-style-detail-btn')
+    .forEach(btn => {
+      btn.addEventListener('click', () => {
+        const item = paperStyleData.find(
+          x => x.sourceUrl === btn.dataset.styleId
+        );
+
+        if (item) {
+           openPaperStyleDetailPage(item);
+        }
+      });
+    });
+}
+
+
+function openPaperStyleDetailPage(item) {
+  document.getElementById('paperStyleDetailTitle').textContent = item.name || '剪纸流派详情';
+
+  document.getElementById('paperStyleDetailProjectNo').textContent =
+    `项目序号：${item.projectNo || '暂无'}`;
+
+  document.getElementById('paperStyleDetailCode').textContent =
+    `项目编号：${item.code || '暂无'}`;
+
+  document.getElementById('paperStyleDetailBatch').textContent =
+    `公布时间：${item.batch || '暂无'}`;
+
+  document.getElementById('paperStyleDetailCategory').textContent =
+    `类别：${item.category || '传统美术'}`;
+
+  document.getElementById('paperStyleDetailRegion').textContent =
+    `所属地区：${item.region || '暂无'}`;
+
+  document.getElementById('paperStyleDetailType').textContent =
+    `类型：${item.type || '暂无'}`;
+
+  document.getElementById('paperStyleDetailApplyUnit').textContent =
+    `申报地区或单位：${item.region || '暂无'}`;
+
+  document.getElementById('paperStyleDetailUnit').textContent =
+    `保护单位：${item.unit || '暂无'}`;
+
+  document.getElementById('paperStyleDetailIntro').textContent =
+    item.intro || '暂无简介';
+
+  showPage('paper-style-detail');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function bindPaperStyleDetail() {
+  document.getElementById('backToPaperStyle')?.addEventListener('click', () => {
+    showPage('paper-style');
+  });
+}
+
 async function bootstrapFromServer() {
   try {
     const data = await api.getPatterns()
@@ -2154,6 +2369,10 @@ async function init() {
   bindCreatorCenter()
   bindAi()
 
+  // 加载流派和风格数据可能需要一些时间，先不阻塞首页的渲染
+  await initPaperStylePage()
+  bindPaperStyleDetail()
+  
   renderCarousel()
   startCarousel()
   rerender()

@@ -35,6 +35,7 @@
         <ul>
           <li data-target="home">首页</li>
           <li data-target="report">资讯报道</li>
+          <li data-target="paper-style">剪纸流派</li>
           <li data-target="gallery">剪纸纹样库</li>
           <li data-target="market">商品展览</li>
           <li data-target="creator">创作者中心</li>
@@ -55,6 +56,7 @@
     <nav class="nav-drawer-nav" aria-label="移动端导航">
       <button type="button" data-target="home">首页</button>
       <button type="button" data-target="report">资讯报道</button>
+      <button type="button" data-target="paper-style">剪纸流派</button>
       <button type="button" data-target="gallery">剪纸纹样库</button>
       <button type="button" data-target="market">商品展览</button>
       <button type="button" data-target="creator">创作者中心</button>
@@ -63,6 +65,7 @@
   </aside>
 
   <main>
+    <!-- 首页 -->
     <section id="home" class="page home-page">
       <div class="home-hero">
         <!-- 左侧：轮播图区域 -->
@@ -136,6 +139,7 @@
         </div>
       </div>
     </section>
+    <!-- 资讯报道 -->
     <section id="report" class="page report-page hidden">
       <div class="page-container">
         <div class="page-header report-page-header">
@@ -168,6 +172,103 @@
         </div>
       </div>
     </section>
+    <!-- 剪纸流派 -->
+    <section id="paper-style" class="page paper-style-page hidden">
+      <div class="page-container">
+
+        <div class="paper-style-hero">
+          <h1>国家级非遗剪纸流派</h1>
+          <p>
+            剪纸是中国传统美术的重要门类，也是国家级非物质文化遗产代表性项目之一。
+            它以纸为主要材料，通过剪、刻、凿等方式形成图案，广泛应用于节庆装饰、
+            民俗礼仪、宗教信仰、生活空间与文创设计之中。不同地区的剪纸在题材、
+            技法、构图和审美风格上各具特色，形成了蔚县剪纸、安塞剪纸、乐清细纹刻纸、
+            傣族剪纸等多种流派。
+          </p>
+        </div>
+
+        <div class="paper-style-search">
+          <input id="paperStyleKeyword" type="text" placeholder="请输入关键词，如：安塞、傣族、陕西、传统美术">
+          <select id="paperStyleRegion">
+            <option value="">全部地区</option>
+          </select>
+          <select id="paperStyleBatch">
+            <option value="">全部批次</option>
+          </select>
+          <button id="paperStyleSearchBtn">检索</button>
+          <button id="paperStyleResetBtn" type="button">重置</button>
+        </div>
+
+        <div class="paper-style-result-head">
+          <h2>检索结果</h2>
+          <span id="paperStyleCount">0 条</span>
+        </div>
+
+        <div class="paper-style-table-wrap">
+          <table class="paper-style-table">
+            <thead>
+              <tr>
+                <th>序号</th>
+                <th>项目序号</th>
+                <th>编号</th>
+                <th>名称</th>
+                <th>类别</th>
+                <th>公布时间</th>
+                <th>类型</th>
+                <th>所属地区</th>
+                <th>保护单位</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+
+            <tbody id="paperStyleList"></tbody>
+          </table>
+        </div>
+
+      </div>
+    </section>
+    <!-- 剪纸流派详情 -->
+    <section id="paper-style-detail" class="page paper-style-detail-page hidden">
+      <div class="page-container">
+        <div class="detail-header" style="transform: translateX(-200px);">
+          <button class="btn-back" id="backToPaperStyle" aria-label="返回剪纸流派" title="返回剪纸流派" style="transform: translateY(-10px);">
+            <
+          </button>
+          <h1>剪纸流派详情</h1>
+        </div>
+
+        <div class="paper-project-detail">
+          <div class="paper-project-title" id="paperStyleDetailTitle"></div>
+
+          <div class="paper-project-table">
+            <table>
+              <tbody>
+                <tr>
+                  <td id="paperStyleDetailProjectNo"></td>
+                  <td id="paperStyleDetailCode"></td>
+                </tr>
+                <tr>
+                  <td id="paperStyleDetailBatch"></td>
+                  <td id="paperStyleDetailCategory"></td>
+                </tr>
+                <tr>
+                  <td id="paperStyleDetailRegion"></td>
+                  <td id="paperStyleDetailType"></td>
+                </tr>
+                <tr>
+                  <td id="paperStyleDetailApplyUnit"></td>
+                  <td id="paperStyleDetailUnit"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="paper-project-text" id="paperStyleDetailIntro"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 剪纸纹样库 -->
     <section id="gallery" class="page gallery-page hidden">
       <div class="page-container">
         <div class="page-header">
@@ -208,7 +309,10 @@
 
         <div id="uploadResult"></div>
       </div>
+    
+    
     </section>
+    <!-- 商品展览 -->
     <section id="market" class="page market-page hidden">
       <div class="page-container">
         <div class="page-header">
@@ -226,6 +330,7 @@
         </div>
       </div>
     </section>
+    <!-- 创作者中心 -->
     <section id="creator" class="page creator-page hidden">
       <div class="page-container">
         <div class="page-header">
@@ -310,6 +415,7 @@
         </div>
       </div>
     </section>
+    <!-- AI 剪纸纹样生成 -->
     <section id="ai" class="page ai-page hidden">
       <div class="page-container">
         <div class="page-header">

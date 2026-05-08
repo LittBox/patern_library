@@ -6670,3 +6670,288 @@ header::before {
     padding-right: 68px;
   }
 }
+
+
+.paper-style-hero{
+  background:#f8f1e8;
+  border-radius:22px;
+  padding:42px;
+  margin-bottom:28px;
+}
+
+.paper-style-hero h1{
+  font-size:34px;
+  margin-bottom:18px;
+  color:#7b1e1e;
+}
+
+.paper-style-hero p{
+  font-size:16px;
+  line-height:2;
+  color:#4b3a32;
+}
+
+.paper-style-search{
+  display:grid;
+  grid-template-columns:2fr 1fr 1fr auto auto;
+  gap:14px;
+  background:#fff;
+  padding:22px;
+  border-radius:18px;
+  box-shadow:0 6px 20px rgba(0,0,0,.06);
+  margin-bottom:26px;
+}
+
+.paper-style-search input,
+.paper-style-search select{
+  height:42px;
+  border:1px solid #ddd;
+  border-radius:10px;
+  padding:0 12px;
+}
+
+.paper-style-search button{
+  height:42px;
+  border:none;
+  border-radius:10px;
+  padding:0 20px;
+  background:#8b1e1e;
+  color:#fff;
+  cursor:pointer;
+}
+
+.paper-style-search button:last-child{
+  background:#999;
+}
+
+.paper-style-result-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:16px;
+}
+
+.paper-style-table-wrap{
+  overflow:auto;
+  background:#fff;
+  border-radius:18px;
+  box-shadow:0 6px 20px rgba(0,0,0,.05);
+}
+
+.paper-style-table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:1200px;
+}
+
+.paper-style-table thead{
+  background:#8b1e1e;
+  color:#fff;
+}
+
+.paper-style-table th{
+  padding:16px 12px;
+  font-size:14px;
+  font-weight:600;
+  text-align:center;
+}
+
+.paper-style-table td{
+  padding:14px 12px;
+  border-bottom:1px solid #eee;
+  font-size:14px;
+  color:#444;
+  text-align:center;
+  line-height:1.7;
+}
+
+.paper-style-table tbody tr:hover{
+  background:#faf6f2;
+}
+
+.paper-style-name{
+  font-weight:600;
+  color:#222;
+}
+
+.paper-style-detail-btn{
+  border:none;
+  background:#8b1e1e;
+  color:#fff;
+  padding:6px 14px;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:13px;
+}
+
+.paper-style-detail-btn:hover{
+  opacity:.9;
+}
+
+.paper-style-item{
+  background:#fff;
+  border-radius:16px;
+  padding:22px;
+  box-shadow:0 4px 16px rgba(0,0,0,.05);
+}
+
+.paper-style-item h3{
+  font-size:22px;
+  color:#222;
+  margin-bottom:10px;
+}
+
+.paper-style-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:12px;
+}
+
+.paper-style-meta span{
+  font-size:13px;
+  background:#f4f4f4;
+  border-radius:999px;
+  padding:4px 10px;
+  color:#666;
+}
+
+.paper-style-intro{
+  font-size:15px;
+  line-height:1.9;
+  color:#555;
+}
+
+@media(max-width:768px){
+  .paper-style-search{
+    grid-template-columns:1fr;
+  }
+
+  .paper-style-hero{
+    padding:26px;
+  }
+}
+
+.paper-style-actions{
+  margin-top:16px;
+}
+
+.paper-style-detail-btn{
+  border:none;
+  background:#8b1e1e;
+  color:#fff;
+  padding:8px 16px;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.paper-style-detail-btn:hover{
+  opacity:.9;
+}
+
+.paper-style-detail-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:18px;
+}
+
+.paper-style-detail-meta span{
+  background:#f4f4f4;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:13px;
+}
+
+.paper-style-detail-intro{
+  line-height:2;
+  color:#444;
+  margin-bottom:20px;
+  white-space:pre-wrap;
+}
+
+.paper-style-detail-unit{
+  margin-bottom:16px;
+}
+
+.paper-style-detail-link a{
+  color:#8b1e1e;
+  text-decoration:none;
+}
+
+.paper-style-detail-page .detail-header{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  margin-bottom:26px;
+}
+
+.paper-style-detail-page .btn-back{
+  width:42px;
+  height:42px;
+  border:none;
+  border-radius:50%;
+  background:#8b1e1e;
+  color:#fff;
+  font-size:22px;
+  cursor:pointer;
+}
+
+.paper-project-detail{
+  background:#fff;
+  border-radius:18px;
+  padding:42px;
+  box-shadow:0 6px 20px rgba(0,0,0,.06);
+}
+
+.paper-project-title{
+  font-size:32px;
+  font-weight:700;
+  text-align:center;
+  color:#222;
+  margin-bottom:32px;
+}
+
+.paper-project-table{
+  margin-bottom:34px;
+}
+
+.paper-project-table table{
+  width:100%;
+  border-collapse:collapse;
+  border:1px solid #e5e5e5;
+}
+
+.paper-project-table td{
+  width:50%;
+  padding:18px 22px;
+  border:1px solid #e5e5e5;
+  font-size:15px;
+  color:#444;
+  line-height:1.7;
+}
+
+.paper-project-text{
+  font-size:16px;
+  line-height:2.1;
+  color:#333;
+  white-space:pre-wrap;
+  text-align:justify;
+  border-top:1px solid #eee;
+  padding-top:28px;
+}
+
+@media(max-width:768px){
+  .paper-project-detail{
+    padding:24px;
+  }
+
+  .paper-project-title{
+    font-size:24px;
+  }
+
+  .paper-project-table td{
+    display:block;
+    width:100%;
+  }
+}
