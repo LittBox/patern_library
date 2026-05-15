@@ -1448,7 +1448,6 @@ function renderCreatorOverview() {
     </article>
   `).join('')
 }
-
 function renderCreatorDetail() {
   if (!creatorDetailSection) return
 
@@ -2390,12 +2389,10 @@ async function bootstrapFromServer() {
     }
     if (Array.isArray(data.creators) && data.creators.length) {
       state.creators = data.creators
+      state.creator = data.creator || data.creators[0]
     }
-    if (data.creator && !state.creator) {
-      state.creator = data.creator
-    }
-    if (!state.creators?.length && state.creator) {
-      state.creators = [state.creator]
+    if (!state.creator && state.creators?.length) {
+      state.creator = state.creators[0]
     }
     saveAppState()
   } catch (error) {
