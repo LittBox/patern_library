@@ -214,13 +214,28 @@ export function saveAppState() {
 }
 
 function migrateLegacyState() {
+
   if (!state.creator) {
     state.creator = createCreator()
   }
 
+  // creators 不存在时先初始化
   if (!Array.isArray(state.creators) || state.creators.length === 0) {
     state.creators = createCreators()
   }
+
+  // 自动补齐新增创作者
+  const defaultCreators = createCreators()
+
+  defaultCreators.forEach(defaultCreator => {
+    const exists = state.creators.some(
+      c => c.id === defaultCreator.id
+    )
+
+    if (!exists) {
+      state.creators.push(defaultCreator)
+    }
+  })
 
   state.patterns = state.patterns.map((pattern) => ({
     ...pattern,
@@ -229,34 +244,64 @@ function migrateLegacyState() {
   }))
 
   const fallbackCreators = createCreators()
+
   const normalizeCreator = (creator) => {
-    const fallback = fallbackCreators.find((item) => item.id === creator.id) || fallbackCreators[0]
-    if (!creator.name || creator.name === '默认创作者') creator.name = fallback.name
-    if (!creator.avatar) creator.avatar = fallback.avatar
-    if (!creator.bio || creator.bio === '专注非遗剪纸纹样与文创设计，将传统图样转译为更适合数字传播与商品化的视觉作品。') {
+    const fallback =
+      fallbackCreators.find((item) => item.id === creator.id)
+      || fallbackCreators[0]
+
+    if (!creator.name || creator.name === '默认创作者') {
+      creator.name = fallback.name
+    }
+
+    if (!creator.avatar) {
+      creator.avatar = fallback.avatar
+    }
+
+    if (
+      !creator.bio ||
+      creator.bio === '专注非遗剪纸纹样与文创设计，将传统图样转译为更适合数字传播与商品化的视觉作品。'
+    ) {
       creator.bio = fallback.bio
     }
-    if (!creator.joinedAt) creator.joinedAt = fallback.joinedAt
+
+    if (!creator.joinedAt) {
+      creator.joinedAt = fallback.joinedAt
+    }
+
     return creator
   }
 
-  state.creators = state.creators.map((creator) => normalizeCreator({ ...creator }))
+  state.creators = state.creators.map(
+    (creator) => normalizeCreator({ ...creator })
+  )
+
   if (!state.creator) {
     state.creator = state.creators[0]
   } else {
     state.creator = normalizeCreator({ ...state.creator })
   }
 
-  const hasPrimary = state.creators.some((creator) => creator.id === state.creator.id)
+  const hasPrimary = state.creators.some(
+    (creator) => creator.id === state.creator.id
+  )
+
   if (!hasPrimary) {
     state.creator = state.creators[0]
   }
 
   state.products = state.products.map((product) => {
-    if (typeof product.description === 'string' && product.description.trim()) {
+    if (
+      typeof product.description === 'string' &&
+      product.description.trim()
+    ) {
       return product
     }
-    const linkedPattern = state.patterns.find((pattern) => pattern.id === product.patternId)
+
+    const linkedPattern = state.patterns.find(
+      (pattern) => pattern.id === product.patternId
+    )
+
     return {
       ...product,
       description: linkedPattern?.description || ''
