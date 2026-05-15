@@ -22,12 +22,14 @@ const DEFAULT_CREATORS = [
     joinedAt: '2026-05-15T00:00:00.000Z'
   }
 ]
+const CREATORS_VERSION = 2
 
 export const state = {
   patterns: [],
   products: [],
   creator: null,
   creators: [],
+  creatorsVersion: CREATORS_VERSION,
   aiDraft: null
 }
 
@@ -141,6 +143,7 @@ export function loadAppState() {
     state.creators = Array.isArray(parsed.creators) && parsed.creators.length
       ? parsed.creators
       : (parsed.creator ? [parsed.creator] : createCreators())
+    state.creatorsVersion = parsed.creatorsVersion || 1
     state.aiDraft = parsed.aiDraft || null
     migrateLegacyState()
   } catch (error) {
@@ -191,6 +194,7 @@ function createStoragePayload({ compact = false, dropDraft = false } = {}) {
     products,
     creator: state.creator,
     creators: state.creators,
+    creatorsVersion: state.creatorsVersion,
     aiDraft
   }
 }
@@ -215,27 +219,20 @@ export function saveAppState() {
 
 function migrateLegacyState() {
 
+  // creators 数据版本迁移
+  if (state.creatorsVersion !== CREATORS_VERSION) {
+    state.creators = createCreators()
+    state.creator = state.creators[0]
+    state.creatorsVersion = CREATORS_VERSION
+  }
+
   if (!state.creator) {
     state.creator = createCreator()
   }
 
-  // creators 不存在时先初始化
   if (!Array.isArray(state.creators) || state.creators.length === 0) {
     state.creators = createCreators()
   }
-
-  // 自动补齐新增创作者
-  const defaultCreators = createCreators()
-
-  defaultCreators.forEach(defaultCreator => {
-    const exists = state.creators.some(
-      c => c.id === defaultCreator.id
-    )
-
-    if (!exists) {
-      state.creators.push(defaultCreator)
-    }
-  })
 
   state.patterns = state.patterns.map((pattern) => ({
     ...pattern,
