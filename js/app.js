@@ -6,6 +6,7 @@ import {
 } from './local-images.js'
 import {
   createCreator,
+  createCreators,
   createPatternRecord,
   createProductFromPattern,
   createSeedPatterns,
@@ -970,14 +971,23 @@ function ensureStateLoaded() {
   if (loaded.patterns.length === 0) {
     loaded.patterns = createSeedPatterns(PLACEHOLDER_SVG)
   }
+  if (!Array.isArray(loaded.creators) || loaded.creators.length === 0) {
+    loaded.creators = createCreators()
+  }
   if (!loaded.creator) {
-    loaded.creator = createCreator()
+    loaded.creator = loaded.creators[0] || createCreator()
   }
   if (!loaded.creator.avatar) {
-    loaded.creator.avatar = '/img/avatar/example.png'
+    loaded.creator.avatar = loaded.creators[0]?.avatar || '/img/avatar/example.png'
   }
   if (!loaded.creator.name || loaded.creator.name === '默认创作者') {
-    loaded.creator.name = '林知夏'
+    loaded.creator.name = loaded.creators[0]?.name || loaded.creator.name
+  }
+  if (!loaded.creator.bio) {
+    loaded.creator.bio = loaded.creators[0]?.bio || loaded.creator.bio
+  }
+  if (!loaded.creator.joinedAt) {
+    loaded.creator.joinedAt = loaded.creators[0]?.joinedAt || new Date().toISOString()
   }
   if (!Array.isArray(loaded.products)) {
     loaded.products = []
@@ -1399,10 +1409,17 @@ function renderProducts() {
 
 function renderCreatorOverview() {
   if (!creatorSection) return
-  const creator = state.creator
+  const creators = Array.isArray(state.creators) && state.creators.length
+    ? state.creators
+    : (state.creator ? [state.creator] : [])
 
-  creatorSection.querySelector('#creatorsGrid').innerHTML = `
-    <article class="creator-card creator-summary-card">
+  if (!creators.length) {
+    creatorSection.querySelector('#creatorsGrid').innerHTML = '<div class="empty-state"><p>还没有创作者资料。</p></div>'
+    return
+  }
+
+  creatorSection.querySelector('#creatorsGrid').innerHTML = creators.map((creator) => `
+    <article class="creator-card creator-summary-card" data-creator-id="${creator.id}">
       <div class="creator-card-header">
         <div class="creator-card-avatar">
           <img src="${creator.avatar || PLACEHOLDER_SVG(220, 220, creator.name)}" alt="${escapeHtml(creator.name)}">
@@ -1414,7 +1431,12 @@ function renderCreatorOverview() {
         </div>
       </div>
       <div class="creator-card-footer">
-        <button class="creator-card-link" id="viewCreatorDetailBtn" aria-label="查看创作者详情">
+        <button
+          class="creator-card-link"
+          data-creator-action="detail"
+          data-creator-id="${creator.id}"
+          aria-label="查看${escapeHtml(creator.name)}详情"
+        >
           <span>详情</span>
           <span class="creator-card-link-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24">
@@ -1424,22 +1446,23 @@ function renderCreatorOverview() {
         </button>
       </div>
     </article>
-  `
-
-  const detailBtn = document.getElementById('viewCreatorDetailBtn')
-  if (detailBtn) {
-    detailBtn.addEventListener('click', () => {
-      activeCreatorId = creator.id
-      showPage('creator-detail')
-      renderCreatorDetail()
-    })
-  }
+  `).join('')
 }
 
 function renderCreatorDetail() {
-  if (!creatorDetailSection || !state.creator || activeCreatorId !== state.creator.id) return
+  if (!creatorDetailSection) return
 
-  const creator = state.creator
+  const creators = Array.isArray(state.creators) && state.creators.length
+    ? state.creators
+    : (state.creator ? [state.creator] : [])
+
+  if (!creators.length) return
+
+  if (!activeCreatorId) {
+    activeCreatorId = creators[0].id
+  }
+
+  const creator = creators.find((item) => item.id === activeCreatorId) || creators[0]
   const metrics = deriveCreatorMetrics(state.patterns, state.products)
   const recentPatterns = getRecentPatterns(state.patterns, 4)
   const tips = []
@@ -2112,6 +2135,15 @@ function bindMarket() {
 
 function bindCreatorCenter() {
   document.getElementById('backToCreator')?.addEventListener('click', () => showPage('creator'))
+  creatorSection?.addEventListener('click', (event) => {
+    const action = event.target.closest('[data-creator-action="detail"]')
+    if (!action) return
+    const creatorId = action.dataset.creatorId
+    if (!creatorId) return
+    activeCreatorId = creatorId
+    showPage('creator-detail')
+    renderCreatorDetail()
+  })
   document.getElementById('creator-detail')?.addEventListener('click', (event) => {
     const action = event.target.closest('[data-action]')
     if (!action) return
@@ -2356,8 +2388,14 @@ async function bootstrapFromServer() {
     if (Array.isArray(data.products) && data.products.length) {
       state.products = data.products
     }
+    if (Array.isArray(data.creators) && data.creators.length) {
+      state.creators = data.creators
+    }
     if (data.creator && !state.creator) {
       state.creator = data.creator
+    }
+    if (!state.creators?.length && state.creator) {
+      state.creators = [state.creator]
     }
     saveAppState()
   } catch (error) {

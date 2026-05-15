@@ -1,12 +1,33 @@
 const STORAGE_KEY = 'pattern-library-state-v2'
-const DEFAULT_CREATOR_NAME = '林知夏'
-const DEFAULT_CREATOR_AVATAR = '/img/avatar/example.png'
-const DEFAULT_CREATOR_BIO = '专注非遗剪纸纹样与文创设计，持续把传统图样转化为更适合当代传播与商品展示的视觉作品。'
+const DEFAULT_CREATORS = [
+  {
+    id: 'creator_001',
+    name: '高庆',
+    avatar: '/创作人图片/高庆.jpg',
+    bio: '省级非遗传承人，剪纸世家第六代传人，目前已经剪了三四件作品，始终坚持对剪纸的热爱。',
+    joinedAt: '2026-05-15T00:00:00.000Z'
+  },
+  {
+    id: 'creator_002',
+    name: '李艳丽',
+    avatar: '/创作人图片/李艳丽.jpg',
+    bio: '滇派剪纸传承人，一分耕耘一分收获，始终坚守在守护剪纸文化的路上。',
+    joinedAt: '2026-05-15T00:00:00.000Z'
+  },
+  {
+    id: 'creator_003',
+    name: '王天宝',
+    avatar: '/创作人图片/王天宝.jpg',
+    bio: '区级非遗剪纸项目代表性传承人之一，精通木刻版画，后将雕刻经验逐步融合到剪纸创作中，形成独属于自己的剪纸风格。',
+    joinedAt: '2026-05-15T00:00:00.000Z'
+  }
+]
 
 export const state = {
   patterns: [],
   products: [],
   creator: null,
+  creators: [],
   aiDraft: null
 }
 
@@ -21,13 +42,11 @@ function randomId(prefix) {
 }
 
 export function createCreator() {
-  return {
-    id: 'creator_001',
-    name: DEFAULT_CREATOR_NAME,
-    avatar: DEFAULT_CREATOR_AVATAR,
-    bio: DEFAULT_CREATOR_BIO,
-    joinedAt: '2026-03-28T12:00:00.000Z'
-  }
+  return { ...DEFAULT_CREATORS[0] }
+}
+
+export function createCreators() {
+  return DEFAULT_CREATORS.map((creator) => ({ ...creator }))
 }
 
 export function createPatternRecord(input) {
@@ -119,6 +138,9 @@ export function loadAppState() {
     state.patterns = Array.isArray(parsed.patterns) ? parsed.patterns : []
     state.products = Array.isArray(parsed.products) ? parsed.products : []
     state.creator = parsed.creator || createCreator()
+    state.creators = Array.isArray(parsed.creators) && parsed.creators.length
+      ? parsed.creators
+      : (parsed.creator ? [parsed.creator] : createCreators())
     state.aiDraft = parsed.aiDraft || null
     migrateLegacyState()
   } catch (error) {
@@ -168,6 +190,7 @@ function createStoragePayload({ compact = false, dropDraft = false } = {}) {
     patterns,
     products,
     creator: state.creator,
+    creators: state.creators,
     aiDraft
   }
 }
@@ -195,20 +218,38 @@ function migrateLegacyState() {
     state.creator = createCreator()
   }
 
+  if (!Array.isArray(state.creators) || state.creators.length === 0) {
+    state.creators = createCreators()
+  }
+
   state.patterns = state.patterns.map((pattern) => ({
     ...pattern,
     imageBlobKey: pattern.imageBlobKey || '',
     imageStorageKey: pattern.imageStorageKey || ''
   }))
 
-  if (!state.creator.name || state.creator.name === '默认创作者') {
-    state.creator.name = DEFAULT_CREATOR_NAME
+  const fallbackCreators = createCreators()
+  const normalizeCreator = (creator) => {
+    const fallback = fallbackCreators.find((item) => item.id === creator.id) || fallbackCreators[0]
+    if (!creator.name || creator.name === '默认创作者') creator.name = fallback.name
+    if (!creator.avatar) creator.avatar = fallback.avatar
+    if (!creator.bio || creator.bio === '专注非遗剪纸纹样与文创设计，将传统图样转译为更适合数字传播与商品化的视觉作品。') {
+      creator.bio = fallback.bio
+    }
+    if (!creator.joinedAt) creator.joinedAt = fallback.joinedAt
+    return creator
   }
-  if (!state.creator.avatar) {
-    state.creator.avatar = DEFAULT_CREATOR_AVATAR
+
+  state.creators = state.creators.map((creator) => normalizeCreator({ ...creator }))
+  if (!state.creator) {
+    state.creator = state.creators[0]
+  } else {
+    state.creator = normalizeCreator({ ...state.creator })
   }
-  if (!state.creator.bio || state.creator.bio === '专注非遗剪纸纹样与文创设计，将传统图样转译为更适合数字传播与商品化的视觉作品。') {
-    state.creator.bio = DEFAULT_CREATOR_BIO
+
+  const hasPrimary = state.creators.some((creator) => creator.id === state.creator.id)
+  if (!hasPrimary) {
+    state.creator = state.creators[0]
   }
 
   state.products = state.products.map((product) => {
